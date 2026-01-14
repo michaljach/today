@@ -54,6 +54,7 @@ struct AppView: View {
         Image("icon-notification")
       }
       .tag(AppFeature.State.Tab.notifications)
+      .badge(store.unreadNotificationsCount)
       
       NavigationStack {
         ProfileView(
@@ -81,6 +82,8 @@ struct AppView: View {
       $0.profileClient = .previewValue
       $0.postClient = .previewValue
       $0.storageClient = .previewValue
+      $0.followClient = .previewValue
+      $0.notificationClient = .previewValue
     }
   )
 }

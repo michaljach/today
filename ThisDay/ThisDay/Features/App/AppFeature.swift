@@ -18,6 +18,9 @@ struct AppFeature {
         /// The date of the user's last post (nil if never posted)
         var lastPostDate: Date?
         
+        /// Count of unread notifications for badge
+        var unreadNotificationsCount: Int = 0
+        
         /// Whether the user can create a new post today
         var canPostToday: Bool {
             guard let lastPostDate else { return true }
@@ -90,6 +93,7 @@ struct AppFeature {
                     // Reset features when user authenticates
                     state.timeline = TimelineFeature.State()
                     state.profile = ProfileFeature.State()
+                    state.notifications = NotificationsFeature.State()
                     // Load the user's profile and last post date
                     return .merge(
                         .run { send in
@@ -112,7 +116,9 @@ struct AppFeature {
                                 print("Failed to fetch current user profile: \(error)")
                                 await send(.currentUserLoaded(.failure(error)))
                             }
-                        }
+                        },
+                        // Start realtime notifications subscription
+                        .send(.notifications(.startRealtimeSubscription))
                     )
                 case .unauthenticated:
                     state.authState = .unauthenticated
@@ -122,8 +128,10 @@ struct AppFeature {
                     state.timeline = TimelineFeature.State()
                     state.explore = ExploreFeature.State()
                     state.profile = ProfileFeature.State()
+                    state.notifications = NotificationsFeature.State()
                     state.selectedTab = .timeline
                     state.lastPostDate = nil
+                    state.unreadNotificationsCount = 0
                 }
                 return .none
                 
@@ -194,6 +202,10 @@ struct AppFeature {
                     state.profile.posts.remove(id: postId)
                     state.profile.stats.postsCount = max(0, state.profile.stats.postsCount - 1)
                 }
+                return .none
+                
+            case .notifications(.delegate(.unreadCountChanged(let count))):
+                state.unreadNotificationsCount = count
                 return .none
                 
             case .auth, .timeline, .explore, .notifications, .profile:

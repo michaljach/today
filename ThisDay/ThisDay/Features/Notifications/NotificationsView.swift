@@ -7,16 +7,30 @@ struct NotificationsView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if store.isLoading {
+                if store.isLoading && store.notifications.isEmpty {
                     ProgressView("Loading...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let errorMessage = store.errorMessage, store.notifications.isEmpty {
+                    ContentUnavailableView {
+                        Label("Error", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(errorMessage)
+                    } actions: {
+                        Button("Retry") {
+                            store.send(.refresh)
+                        }
+                    }
                 } else if store.notifications.isEmpty {
                     emptyState
                 } else {
                     List(store.notifications) { notification in
                         NotificationRow(notification: notification)
+                            .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
                     }
                     .listStyle(.plain)
+                    .refreshable {
+                        await store.send(.refresh).finish()
+                    }
                 }
             }
             .navigationTitle("Notifications")
@@ -48,23 +62,23 @@ struct NotificationsView: View {
 }
 
 struct NotificationRow: View {
-    let notification: NotificationItem
+    let notification: AppNotification
     
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: notification.user.avatarURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                default:
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                }
+            // Unread indicator
+            Circle()
+                .fill(notification.isRead ? Color.clear : Color.blue)
+                .frame(width: 8, height: 8)
+            
+            // Avatar
+            if let actor = notification.actor {
+                AvatarView(url: actor.avatarURL, size: 44)
+            } else {
+                Circle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 44, height: 44)
             }
-            .frame(width: 40, height: 40)
-            .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(notificationText)
@@ -83,11 +97,12 @@ struct NotificationRow: View {
     }
     
     private var notificationText: AttributedString {
-        var string = AttributedString(notification.user.displayName)
+        let displayName = notification.actor?.displayName ?? "Someone"
+        var string = AttributedString(displayName)
         string.font = .subheadline.bold()
         
         var action: AttributedString
-        switch notification.type {
+        switch notification.notificationType {
         case .like:
             action = AttributedString(" liked your photo")
         case .comment:
@@ -102,7 +117,7 @@ struct NotificationRow: View {
     
     private var notificationIcon: some View {
         Group {
-            switch notification.type {
+            switch notification.notificationType {
             case .like:
                 Image(systemName: "heart.fill")
                     .foregroundStyle(.red)
@@ -122,6 +137,8 @@ struct NotificationRow: View {
     NotificationsView(
         store: Store(initialState: NotificationsFeature.State()) {
             NotificationsFeature()
+        } withDependencies: {
+            $0.notificationClient = .previewValue
         }
     )
 }

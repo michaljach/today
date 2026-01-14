@@ -47,6 +47,7 @@
 		A1000020 /* CommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000020 /* CommentsView.swift */; };
 		A1000021 /* FollowService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000021 /* FollowService.swift */; };
 		A1000022 /* Secrets.json in Resources */ = {isa = PBXBuildFile; fileRef = A2000022 /* Secrets.json */; };
+		A1000024 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024 /* NotificationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -85,6 +86,7 @@
 		A2000021 /* FollowService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowService.swift; sourceTree = "<group>"; };
 		A2000022 /* Secrets.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Secrets.json; sourceTree = "<group>"; };
 		A2000023 /* Secrets.example.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Secrets.example.json; sourceTree = "<group>"; };
+		A2000024 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -227,6 +229,7 @@
 				A2000019 /* StorageService.swift */,
 				A200001A /* Dependencies.swift */,
 				A2000021 /* FollowService.swift */,
+				A2000024 /* NotificationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -372,6 +375,7 @@
 				A100001F /* CommentsFeature.swift in Sources */,
 				A1000020 /* CommentsView.swift in Sources */,
 				A1000021 /* FollowService.swift in Sources */,
+				A1000024 /* NotificationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

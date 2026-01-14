@@ -378,3 +378,71 @@ extension DependencyValues {
         set { self[FollowClient.self] = newValue }
     }
 }
+
+// MARK: - Notification Client Dependency
+
+/// TCA Dependency for notification operations
+struct NotificationClient {
+    var getNotifications: @Sendable (Int, Int) async throws -> [AppNotification]
+    var getUnreadCount: @Sendable () async throws -> Int
+    var markAsRead: @Sendable (UUID) async throws -> Void
+    var markAllAsRead: @Sendable () async throws -> Void
+    var subscribeToNotifications: @Sendable () async -> AsyncStream<AppNotification>
+    var unsubscribe: @Sendable () async -> Void
+}
+
+extension NotificationClient: DependencyKey {
+    static let liveValue = NotificationClient(
+        getNotifications: { limit, offset in
+            try await NotificationService.shared.getNotifications(limit: limit, offset: offset)
+        },
+        getUnreadCount: {
+            try await NotificationService.shared.getUnreadCount()
+        },
+        markAsRead: { notificationId in
+            try await NotificationService.shared.markAsRead(notificationId: notificationId)
+        },
+        markAllAsRead: {
+            try await NotificationService.shared.markAllAsRead()
+        },
+        subscribeToNotifications: {
+            await NotificationService.shared.subscribeToNotifications()
+        },
+        unsubscribe: {
+            await NotificationService.shared.unsubscribe()
+        }
+    )
+    
+    static let previewValue = NotificationClient(
+        getNotifications: { _, _ in AppNotification.mockNotifications },
+        getUnreadCount: { 2 },
+        markAsRead: { _ in },
+        markAllAsRead: { },
+        subscribeToNotifications: {
+            AsyncStream { continuation in
+                // Simulate a notification after 2 seconds
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    continuation.yield(AppNotification.mock1)
+                }
+            }
+        },
+        unsubscribe: { }
+    )
+    
+    static let testValue = NotificationClient(
+        getNotifications: unimplemented("\(Self.self).getNotifications"),
+        getUnreadCount: unimplemented("\(Self.self).getUnreadCount"),
+        markAsRead: unimplemented("\(Self.self).markAsRead"),
+        markAllAsRead: unimplemented("\(Self.self).markAllAsRead"),
+        subscribeToNotifications: unimplemented("\(Self.self).subscribeToNotifications"),
+        unsubscribe: unimplemented("\(Self.self).unsubscribe")
+    )
+}
+
+extension DependencyValues {
+    var notificationClient: NotificationClient {
+        get { self[NotificationClient.self] }
+        set { self[NotificationClient.self] = newValue }
+    }
+}
