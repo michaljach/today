@@ -10,6 +10,8 @@ struct ProfileFeature {
         var stats: ProfileStats = ProfileStats()
         var isLoading: Bool = false
         var isUploadingAvatar: Bool = false
+        var isTogglingFollow: Bool = false
+        var isFollowing: Bool = false
         var errorMessage: String?
         
         // For viewing other users' profiles
@@ -31,13 +33,15 @@ struct ProfileFeature {
     enum Action {
         case onAppear
         case refresh
-        case dataLoaded(Result<(User, [Post]), Error>)
+        case dataLoaded(Result<(User, [Post], Int, Int, Bool), Error>)
         case signOutTapped
         case signOutCompleted(Result<Void, Error>)
         case avatarTapped
         case avatarSelected(Data)
         case avatarUploaded(Result<URL, Error>)
         case profileUpdated(Result<User, Error>)
+        case followTapped
+        case followCompleted(Result<Bool, Error>)
         case likeTapped(Post)
         case likeCompleted(postId: UUID, isLiked: Bool)
         case commentsTapped(Post)
@@ -60,6 +64,7 @@ struct ProfileFeature {
     @Dependency(\.profileClient) var profileClient
     @Dependency(\.postClient) var postClient
     @Dependency(\.storageClient) var storageClient
+    @Dependency(\.followClient) var followClient
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -77,15 +82,21 @@ struct ProfileFeature {
                 let viewingUserId = state.viewingUserId
                 let existingUser = state.user
                 
-                return .run { send in
+                return .run { [followClient] send in
                     do {
                         let user: User
                         let posts: [Post]
+                        let followersCount: Int
+                        let followingCount: Int
+                        var isFollowing = false
                         
                         if let userId = viewingUserId {
                             // Viewing another user's profile
                             user = try await profileClient.getProfile(userId)
                             posts = try await postClient.getUserPosts(userId, 20, 0)
+                            followersCount = try await followClient.getFollowerCount(userId)
+                            followingCount = try await followClient.getFollowingCount(userId)
+                            isFollowing = try await followClient.isFollowing(userId)
                         } else {
                             // Current user's profile - use existing user if available
                             if let existingUser {
@@ -94,9 +105,11 @@ struct ProfileFeature {
                                 user = try await profileClient.getCurrentUserProfile()
                             }
                             posts = try await postClient.getCurrentUserPosts(20, 0)
+                            followersCount = try await followClient.getFollowerCount(user.id)
+                            followingCount = try await followClient.getFollowingCount(user.id)
                         }
                         
-                        await send(.dataLoaded(.success((user, posts))))
+                        await send(.dataLoaded(.success((user, posts, followersCount, followingCount, isFollowing))))
                     } catch {
                         await send(.dataLoaded(.failure(error)))
                     }
@@ -107,34 +120,43 @@ struct ProfileFeature {
                 state.errorMessage = nil
                 let viewingUserId = state.viewingUserId
                 
-                return .run { send in
+                return .run { [followClient] send in
                     do {
                         let user: User
                         let posts: [Post]
+                        let followersCount: Int
+                        let followingCount: Int
+                        var isFollowing = false
                         
                         if let userId = viewingUserId {
                             user = try await profileClient.getProfile(userId)
                             posts = try await postClient.getUserPosts(userId, 20, 0)
+                            followersCount = try await followClient.getFollowerCount(userId)
+                            followingCount = try await followClient.getFollowingCount(userId)
+                            isFollowing = try await followClient.isFollowing(userId)
                         } else {
                             user = try await profileClient.getCurrentUserProfile()
                             posts = try await postClient.getCurrentUserPosts(20, 0)
+                            followersCount = try await followClient.getFollowerCount(user.id)
+                            followingCount = try await followClient.getFollowingCount(user.id)
                         }
                         
-                        await send(.dataLoaded(.success((user, posts))))
+                        await send(.dataLoaded(.success((user, posts, followersCount, followingCount, isFollowing))))
                     } catch {
                         await send(.dataLoaded(.failure(error)))
                     }
                 }
                 
-            case .dataLoaded(.success(let (user, posts))):
+            case .dataLoaded(.success(let (user, posts, followersCount, followingCount, isFollowing))):
                 state.isLoading = false
                 state.user = user
                 state.posts = IdentifiedArrayOf(uniqueElements: posts)
                 state.stats = ProfileStats(
                     postsCount: posts.count,
-                    followersCount: 0, // TODO: Implement followers
-                    followingCount: 0  // TODO: Implement following
+                    followersCount: followersCount,
+                    followingCount: followingCount
                 )
+                state.isFollowing = isFollowing
                 return .none
                 
             case .dataLoaded(.failure(let error)):
@@ -200,6 +222,43 @@ struct ProfileFeature {
                 
             case .profileUpdated(.failure(let error)):
                 state.isUploadingAvatar = false
+                state.errorMessage = error.localizedDescription
+                return .none
+                
+            case .followTapped:
+                guard let userId = state.viewingUserId else { return .none }
+                
+                state.isTogglingFollow = true
+                let wasFollowing = state.isFollowing
+                
+                // Optimistic update
+                state.isFollowing = !wasFollowing
+                state.stats.followersCount += wasFollowing ? -1 : 1
+                
+                return .run { [followClient] send in
+                    do {
+                        let isNowFollowing = try await followClient.toggleFollow(userId)
+                        await send(.followCompleted(.success(isNowFollowing)))
+                    } catch {
+                        await send(.followCompleted(.failure(error)))
+                    }
+                }
+                
+            case .followCompleted(.success(let isFollowing)):
+                state.isTogglingFollow = false
+                // Sync with actual state if different
+                if state.isFollowing != isFollowing {
+                    state.isFollowing = isFollowing
+                    // Recalculate followers count
+                    state.stats.followersCount += isFollowing ? 1 : -1
+                }
+                return .none
+                
+            case .followCompleted(.failure(let error)):
+                state.isTogglingFollow = false
+                // Revert optimistic update
+                state.isFollowing = !state.isFollowing
+                state.stats.followersCount += state.isFollowing ? 1 : -1
                 state.errorMessage = error.localizedDescription
                 return .none
                 

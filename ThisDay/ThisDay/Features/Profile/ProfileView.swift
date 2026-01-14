@@ -121,6 +121,19 @@ struct ProfileView: View {
                 }
                 .buttonStyle(.bordered)
                 .padding(.horizontal, 32)
+            } else {
+                Button {
+                    store.send(.followTapped)
+                } label: {
+                    Text(store.isFollowing ? "Following" : "Follow")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(store.isFollowing ? .bordered : .borderedProminent)
+                .disabled(store.isTogglingFollow)
+                .padding(.horizontal, 32)
             }
         }
         .padding()
@@ -217,6 +230,7 @@ struct ProfileView: View {
             $0.profileClient = .previewValue
             $0.postClient = .previewValue
             $0.storageClient = .previewValue
+            $0.followClient = .previewValue
         }
     )
 }

@@ -157,6 +157,7 @@ extension DependencyValues {
 /// TCA Dependency for post operations
 struct PostClient {
     var getTimeline: @Sendable (Int, Int) async throws -> [Post]
+    var getExploreFeed: @Sendable (Int, Int) async throws -> [Post]
     var getUserPosts: @Sendable (UUID, Int, Int) async throws -> [Post]
     var getCurrentUserPosts: @Sendable (Int, Int) async throws -> [Post]
     var createPost: @Sendable (String?, [(URL, URL?, Date?)]) async throws -> Post
@@ -174,6 +175,9 @@ extension PostClient: DependencyKey {
     static let liveValue = PostClient(
         getTimeline: { limit, offset in
             try await PostService.shared.getTimeline(limit: limit, offset: offset)
+        },
+        getExploreFeed: { limit, offset in
+            try await PostService.shared.getExploreFeed(limit: limit, offset: offset)
         },
         getUserPosts: { userId, limit, offset in
             try await PostService.shared.getPostsByUser(userId: userId, limit: limit, offset: offset)
@@ -212,6 +216,7 @@ extension PostClient: DependencyKey {
     
     static let previewValue = PostClient(
         getTimeline: { _, _ in Post.mockPosts },
+        getExploreFeed: { _, _ in Post.mockPosts },
         getUserPosts: { _, _, _ in Post.mockPosts },
         getCurrentUserPosts: { _, _ in Post.mockPosts.filter { $0.user?.username == "johndoe" } },
         createPost: { caption, _ in
@@ -231,6 +236,7 @@ extension PostClient: DependencyKey {
     
     static let testValue = PostClient(
         getTimeline: unimplemented("\(Self.self).getTimeline"),
+        getExploreFeed: unimplemented("\(Self.self).getExploreFeed"),
         getUserPosts: unimplemented("\(Self.self).getUserPosts"),
         getCurrentUserPosts: unimplemented("\(Self.self).getCurrentUserPosts"),
         createPost: unimplemented("\(Self.self).createPost"),
