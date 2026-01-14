@@ -109,6 +109,7 @@ struct ProfileClient {
     var getCurrentUserProfile: @Sendable () async throws -> User
     var updateProfile: @Sendable (String?, URL?) async throws -> User
     var searchProfiles: @Sendable (String) async throws -> [User]
+    var getAllUsers: @Sendable (Int) async throws -> [User]
 }
 
 extension ProfileClient: DependencyKey {
@@ -127,6 +128,9 @@ extension ProfileClient: DependencyKey {
         },
         searchProfiles: { query in
             try await ProfileService.shared.searchProfiles(query: query)
+        },
+        getAllUsers: { limit in
+            try await ProfileService.shared.getAllUsers(limit: limit)
         }
     )
     
@@ -134,14 +138,16 @@ extension ProfileClient: DependencyKey {
         getProfile: { _ in .mock1 },
         getCurrentUserProfile: { .mock1 },
         updateProfile: { _, _ in .mock1 },
-        searchProfiles: { _ in [.mock1, .mock2, .mock3] }
+        searchProfiles: { _ in [.mock1, .mock2, .mock3] },
+        getAllUsers: { _ in [.mock1, .mock2, .mock3, .mock4] }
     )
     
     static let testValue = ProfileClient(
         getProfile: unimplemented("\(Self.self).getProfile"),
         getCurrentUserProfile: unimplemented("\(Self.self).getCurrentUserProfile"),
         updateProfile: unimplemented("\(Self.self).updateProfile"),
-        searchProfiles: unimplemented("\(Self.self).searchProfiles")
+        searchProfiles: unimplemented("\(Self.self).searchProfiles"),
+        getAllUsers: unimplemented("\(Self.self).getAllUsers")
     )
 }
 

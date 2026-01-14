@@ -6,6 +6,7 @@ struct ExploreFeature {
     @ObservableState
     struct State: Equatable {
         var posts: IdentifiedArrayOf<Post> = []
+        var suggestedUsers: [User] = []
         var searchQuery: String = ""
         var searchResults: [User] = []
         var isLoading: Bool = false
@@ -21,6 +22,7 @@ struct ExploreFeature {
         case onAppear
         case refresh
         case postsLoaded(Result<[Post], Error>)
+        case suggestedUsersLoaded(Result<[User], Error>)
         case searchUsers
         case debouncedSearch
         case searchResultsLoaded(Result<[User], Error>)
@@ -65,27 +67,48 @@ struct ExploreFeature {
                 guard state.posts.isEmpty else { return .none }
                 state.isLoading = true
                 state.errorMessage = nil
-                return .run { send in
-                    do {
-                        // For explore, get the latest posts (could be filtered/curated in future)
-                        let posts = try await postClient.getTimeline(30, 0)
-                        await send(.postsLoaded(.success(posts)))
-                    } catch {
-                        await send(.postsLoaded(.failure(error)))
+                return .merge(
+                    .run { send in
+                        do {
+                            // Use getExploreFeed to show all posts from all users
+                            let posts = try await postClient.getExploreFeed(30, 0)
+                            await send(.postsLoaded(.success(posts)))
+                        } catch {
+                            await send(.postsLoaded(.failure(error)))
+                        }
+                    },
+                    .run { send in
+                        do {
+                            // Load suggested users to display
+                            let users = try await profileClient.getAllUsers(20)
+                            await send(.suggestedUsersLoaded(.success(users)))
+                        } catch {
+                            await send(.suggestedUsersLoaded(.failure(error)))
+                        }
                     }
-                }
+                )
                 
             case .refresh:
                 state.isRefreshing = true
                 state.errorMessage = nil
-                return .run { send in
-                    do {
-                        let posts = try await postClient.getTimeline(30, 0)
-                        await send(.postsLoaded(.success(posts)))
-                    } catch {
-                        await send(.postsLoaded(.failure(error)))
+                return .merge(
+                    .run { send in
+                        do {
+                            let posts = try await postClient.getExploreFeed(30, 0)
+                            await send(.postsLoaded(.success(posts)))
+                        } catch {
+                            await send(.postsLoaded(.failure(error)))
+                        }
+                    },
+                    .run { send in
+                        do {
+                            let users = try await profileClient.getAllUsers(20)
+                            await send(.suggestedUsersLoaded(.success(users)))
+                        } catch {
+                            await send(.suggestedUsersLoaded(.failure(error)))
+                        }
                     }
-                }
+                )
                 
             case .postsLoaded(.success(let posts)):
                 state.isLoading = false
@@ -97,6 +120,14 @@ struct ExploreFeature {
                 state.isLoading = false
                 state.isRefreshing = false
                 state.errorMessage = error.localizedDescription
+                return .none
+                
+            case .suggestedUsersLoaded(.success(let users)):
+                state.suggestedUsers = users
+                return .none
+                
+            case .suggestedUsersLoaded(.failure):
+                // Silently fail - suggested users are not critical
                 return .none
                 
             case .searchUsers, .debouncedSearch:

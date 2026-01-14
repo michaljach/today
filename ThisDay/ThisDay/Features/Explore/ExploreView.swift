@@ -78,17 +78,72 @@ struct ExploreView: View {
                     // Search Results
                     if !store.searchResults.isEmpty {
                         searchResultsSection
-                    }
-                    
-                    // Photo Grid
-                    if store.searchQuery.isEmpty {
+                    } else if store.searchQuery.isEmpty {
+                        // Suggested Users Section (only when not searching)
+                        if !store.suggestedUsers.isEmpty {
+                            suggestedUsersSection
+                        }
+                        
+                        // Photo Grid
                         photoGrid(cellSize: cellSize)
+                    } else if store.isSearching {
+                        ProgressView("Searching...")
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 40)
+                    } else {
+                        // No results found
+                        ContentUnavailableView {
+                            Label("No Users Found", systemImage: "person.slash")
+                        } description: {
+                            Text("No users match \"\(store.searchQuery)\"")
+                        }
+                        .padding(.top, 40)
                     }
                 }
             }
             .refreshable {
                 await store.send(.refresh).finish()
             }
+        }
+    }
+    
+    private var suggestedUsersSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Suggested Users")
+                .font(.headline)
+                .padding(.horizontal)
+                .padding(.top, 12)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(store.suggestedUsers, id: \.id) { user in
+                        Button {
+                            store.send(.userTapped(user))
+                        } label: {
+                            VStack(spacing: 8) {
+                                AvatarView(url: user.avatarURL, size: 64)
+                                
+                                VStack(spacing: 2) {
+                                    Text(user.displayName)
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .lineLimit(1)
+                                    Text("@\(user.username)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                            .frame(width: 80)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal)
+            }
+            
+            Divider()
+                .padding(.top, 8)
         }
     }
     

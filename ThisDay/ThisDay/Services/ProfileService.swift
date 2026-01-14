@@ -76,6 +76,19 @@ actor ProfileService {
             .value
     }
     
+    /// Fetches all users (for explore/discovery)
+    /// - Parameter limit: Maximum number of results (default 20)
+    /// - Returns: Array of user profiles ordered by most recent
+    func getAllUsers(limit: Int = 20) async throws -> [User] {
+        try await supabase
+            .from(tableName)
+            .select()
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute()
+            .value
+    }
+    
     // MARK: - Update Operations
     
     /// Updates the current user's profile
