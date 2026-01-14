@@ -59,6 +59,7 @@ struct AppFeature {
     @Dependency(\.authClient) var authClient
     @Dependency(\.postClient) var postClient
     @Dependency(\.profileClient) var profileClient
+    @Dependency(\.notificationClient) var notificationClient
     
     var body: some ReducerOf<Self> {
         Scope(state: \.auth, action: \.auth) {
@@ -132,8 +133,11 @@ struct AppFeature {
                     state.selectedTab = .timeline
                     state.lastPostDate = nil
                     state.unreadNotificationsCount = 0
+                    // Unsubscribe from realtime notifications
+                    return .run { [notificationClient] _ in
+                        await notificationClient.unsubscribe()
+                    }
                 }
-                return .none
                 
             case .lastPostDateLoaded(let date):
                 state.lastPostDate = date

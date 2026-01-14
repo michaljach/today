@@ -9,6 +9,8 @@ struct NotificationsFeature {
         var isLoading: Bool = false
         var unreadCount: Int = 0
         var errorMessage: String?
+        
+        @Presents var destination: Destination.State?
     }
     
     enum Action {
@@ -20,6 +22,9 @@ struct NotificationsFeature {
         case newNotificationReceived(AppNotification)
         case markAllAsRead
         case markAllAsReadCompleted(Result<Void, Error>)
+        case notificationTapped(AppNotification)
+        case postLoaded(Result<Post, Error>)
+        case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
         
         @CasePathable
@@ -28,7 +33,14 @@ struct NotificationsFeature {
         }
     }
     
+    @Reducer(state: .equatable)
+    enum Destination {
+        case profile(ProfileFeature)
+        case postDetail(PostDetailFeature)
+    }
+    
     @Dependency(\.notificationClient) var notificationClient
+    @Dependency(\.postClient) var postClient
     
     var body: some ReducerOf<Self> {
         Reduce { state, action in
@@ -127,9 +139,41 @@ struct NotificationsFeature {
                 print("Failed to mark notifications as read: \(error)")
                 return .none
                 
+            case .notificationTapped(let notification):
+                switch notification.notificationType {
+                case .follow:
+                    // Navigate to the actor's profile
+                    state.destination = .profile(ProfileFeature.State(viewingUserId: notification.actorId))
+                    return .none
+                    
+                case .like, .comment:
+                    // Navigate to the post - need to fetch it first
+                    guard let postId = notification.postId else { return .none }
+                    return .run { send in
+                        do {
+                            let post = try await postClient.getPost(postId)
+                            await send(.postLoaded(.success(post)))
+                        } catch {
+                            await send(.postLoaded(.failure(error)))
+                        }
+                    }
+                }
+                
+            case .postLoaded(.success(let post)):
+                state.destination = .postDetail(PostDetailFeature.State(post: post))
+                return .none
+                
+            case .postLoaded(.failure(let error)):
+                state.errorMessage = "Could not load post: \(error.localizedDescription)"
+                return .none
+                
+            case .destination:
+                return .none
+                
             case .delegate:
                 return .none
             }
         }
+        .ifLet(\.$destination, action: \.destination)
     }
 }

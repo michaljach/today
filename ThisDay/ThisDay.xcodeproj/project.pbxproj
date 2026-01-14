@@ -48,6 +48,8 @@
 		A1000021 /* FollowService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000021 /* FollowService.swift */; };
 		A1000022 /* Secrets.json in Resources */ = {isa = PBXBuildFile; fileRef = A2000022 /* Secrets.json */; };
 		A1000024 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024 /* NotificationService.swift */; };
+		A1000025 /* PostDetailFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025 /* PostDetailFeature.swift */; };
+		A1000026 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026 /* PostDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -87,6 +89,8 @@
 		A2000022 /* Secrets.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Secrets.json; sourceTree = "<group>"; };
 		A2000023 /* Secrets.example.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Secrets.example.json; sourceTree = "<group>"; };
 		A2000024 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		A2000025 /* PostDetailFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailFeature.swift; sourceTree = "<group>"; };
+		A2000026 /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +159,7 @@
 				A500000C /* Auth */,
 				A500000E /* Comments */,
 				A500000D /* Compose */,
+				A500000F /* PostDetail */,
 				A5000005 /* Timeline */,
 				A5000008 /* Explore */,
 				A5000009 /* Notifications */,
@@ -259,6 +264,15 @@
 				A2000020 /* CommentsView.swift */,
 			);
 			path = Comments;
+			sourceTree = "<group>";
+		};
+		A500000F /* PostDetail */ = {
+			isa = PBXGroup;
+			children = (
+				A2000025 /* PostDetailFeature.swift */,
+				A2000026 /* PostDetailView.swift */,
+			);
+			path = PostDetail;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -376,6 +390,8 @@
 				A1000020 /* CommentsView.swift in Sources */,
 				A1000021 /* FollowService.swift in Sources */,
 				A1000024 /* NotificationService.swift in Sources */,
+				A1000025 /* PostDetailFeature.swift in Sources */,
+				A1000026 /* PostDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

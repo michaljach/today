@@ -24,8 +24,13 @@ struct NotificationsView: View {
                     emptyState
                 } else {
                     List(store.notifications) { notification in
-                        NotificationRow(notification: notification)
-                            .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
+                        Button {
+                            store.send(.notificationTapped(notification))
+                        } label: {
+                            NotificationRow(notification: notification)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -35,6 +40,12 @@ struct NotificationsView: View {
             }
             .navigationTitle("Notifications")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(item: $store.scope(state: \.destination?.profile, action: \.destination.profile)) { profileStore in
+                ProfileView(store: profileStore)
+            }
+            .navigationDestination(item: $store.scope(state: \.destination?.postDetail, action: \.destination.postDetail)) { postDetailStore in
+                PostDetailView(store: postDetailStore)
+            }
         }
         .onAppear {
             store.send(.onAppear)
