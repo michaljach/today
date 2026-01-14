@@ -1,0 +1,141 @@
+import ComposableArchitecture
+import Foundation
+
+@Reducer
+struct ExploreFeature {
+    @ObservableState
+    struct State: Equatable {
+        var posts: IdentifiedArrayOf<Post> = []
+        var searchQuery: String = ""
+        var searchResults: [User] = []
+        var isLoading: Bool = false
+        var isRefreshing: Bool = false
+        var isSearching: Bool = false
+        var errorMessage: String?
+        
+        @Presents var destination: Destination.State?
+    }
+    
+    enum Action: BindableAction {
+        case binding(BindingAction<State>)
+        case onAppear
+        case refresh
+        case postsLoaded(Result<[Post], Error>)
+        case searchUsers
+        case debouncedSearch
+        case searchResultsLoaded(Result<[User], Error>)
+        case clearSearch
+        case userTapped(User)
+        case destination(PresentationAction<Destination.Action>)
+    }
+    
+    @Reducer(state: .equatable)
+    enum Destination {
+        case profile(ProfileFeature)
+    }
+    
+    private enum CancelID { case search }
+    
+    @Dependency(\.postClient) var postClient
+    @Dependency(\.profileClient) var profileClient
+    @Dependency(\.continuousClock) var clock
+    
+    var body: some ReducerOf<Self> {
+        BindingReducer()
+        
+        Reduce { state, action in
+            switch action {
+            case .binding(\.searchQuery):
+                if state.searchQuery.isEmpty {
+                    state.searchResults = []
+                    state.isSearching = false
+                    return .cancel(id: CancelID.search)
+                }
+                // Debounce: wait 300ms before searching
+                return .run { send in
+                    try await clock.sleep(for: .milliseconds(300))
+                    await send(.debouncedSearch)
+                }
+                .cancellable(id: CancelID.search, cancelInFlight: true)
+                
+            case .binding:
+                return .none
+                
+            case .onAppear:
+                guard state.posts.isEmpty else { return .none }
+                state.isLoading = true
+                state.errorMessage = nil
+                return .run { send in
+                    do {
+                        // For explore, get the latest posts (could be filtered/curated in future)
+                        let posts = try await postClient.getTimeline(30, 0)
+                        await send(.postsLoaded(.success(posts)))
+                    } catch {
+                        await send(.postsLoaded(.failure(error)))
+                    }
+                }
+                
+            case .refresh:
+                state.isRefreshing = true
+                state.errorMessage = nil
+                return .run { send in
+                    do {
+                        let posts = try await postClient.getTimeline(30, 0)
+                        await send(.postsLoaded(.success(posts)))
+                    } catch {
+                        await send(.postsLoaded(.failure(error)))
+                    }
+                }
+                
+            case .postsLoaded(.success(let posts)):
+                state.isLoading = false
+                state.isRefreshing = false
+                state.posts = IdentifiedArrayOf(uniqueElements: posts)
+                return .none
+                
+            case .postsLoaded(.failure(let error)):
+                state.isLoading = false
+                state.isRefreshing = false
+                state.errorMessage = error.localizedDescription
+                return .none
+                
+            case .searchUsers, .debouncedSearch:
+                guard !state.searchQuery.isEmpty else { return .none }
+                state.isSearching = true
+                let query = state.searchQuery
+                return .run { send in
+                    do {
+                        let users = try await profileClient.searchProfiles(query)
+                        await send(.searchResultsLoaded(.success(users)))
+                    } catch {
+                        await send(.searchResultsLoaded(.failure(error)))
+                    }
+                }
+                .cancellable(id: CancelID.search, cancelInFlight: true)
+                
+            case .searchResultsLoaded(.success(let users)):
+                state.isSearching = false
+                state.searchResults = users
+                return .none
+                
+            case .searchResultsLoaded(.failure):
+                state.isSearching = false
+                return .none
+                
+            case .clearSearch:
+                state.searchQuery = ""
+                state.searchResults = []
+                state.isSearching = false
+                return .none
+                
+            case .userTapped(let user):
+                state.destination = .profile(ProfileFeature.State(viewingUserId: user.id))
+                return .none
+                
+            case .destination:
+                return .none
+            }
+        }
+        .ifLet(\.$destination, action: \.destination)
+    }
+}
