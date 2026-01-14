@@ -131,7 +131,8 @@ struct ProfileView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                 }
-                .buttonStyle(store.isFollowing ? .bordered : .borderedProminent)
+                .buttonStyle(.borderedProminent)
+                .tint(store.isFollowing ? .gray : .blue)
                 .disabled(store.isTogglingFollow)
                 .padding(.horizontal, 32)
             }
