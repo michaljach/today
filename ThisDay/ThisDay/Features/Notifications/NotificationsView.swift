@@ -31,7 +31,6 @@ struct NotificationsView: View {
                         }
                         .buttonStyle(.plain)
                         .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -78,11 +77,6 @@ struct NotificationRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Unread indicator
-            Circle()
-                .fill(notification.isRead ? Color.clear : Color.blue)
-                .frame(width: 8, height: 8)
-            
             // Avatar
             if let actor = notification.actor {
                 AvatarView(url: actor.avatarURL, size: 44)
