@@ -68,6 +68,12 @@ actor AuthService {
         try? await supabase.auth.session
     }
     
+    /// Gets the current session synchronously from cache (no network call)
+    /// - Returns: The cached session or nil if not available
+    nonisolated func cachedSession() -> Session? {
+        supabase.auth.currentSession
+    }
+    
     /// Gets the current user if signed in
     /// - Returns: The current Supabase user or nil
     func currentUser() async -> Supabase.User? {

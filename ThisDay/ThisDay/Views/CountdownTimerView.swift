@@ -3,6 +3,7 @@ import SwiftUI
 struct CountdownTimerView: View {
     let lastPostDate: Date
     var style: Style = .banner
+    var onTap: (() -> Void)?
     @State private var timeRemaining: TimeInterval = 0
     @State private var timer: Timer?
     
@@ -64,22 +65,27 @@ struct CountdownTimerView: View {
     }
     
     private var floatingView: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "clock.fill")
-                .font(.caption)
-            Text("Post again in \(formattedTime)")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .monospacedDigit()
+        Button {
+            onTap?()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "clock.fill")
+                    .font(.caption)
+                Text("Post again in \(formattedTime)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .monospacedDigit()
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(Color.orange)
+                    .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+            )
         }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(
-            Capsule()
-                .fill(Color.orange)
-                .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
-        )
+        .buttonStyle(.plain)
         .padding(.top, 8)
     }
     

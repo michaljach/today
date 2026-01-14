@@ -52,6 +52,7 @@ struct ProfileFeature {
         enum Delegate {
             case didSignOut
             case profileUpdated(User)
+            case followStateChanged(isFollowing: Bool)
         }
     }
     
@@ -252,7 +253,8 @@ struct ProfileFeature {
                     // Recalculate followers count
                     state.stats.followersCount += isFollowing ? 1 : -1
                 }
-                return .none
+                // Notify parent to refresh timeline since followed users changed
+                return .send(.delegate(.followStateChanged(isFollowing: isFollowing)))
                 
             case .followCompleted(.failure(let error)):
                 state.isTogglingFollow = false

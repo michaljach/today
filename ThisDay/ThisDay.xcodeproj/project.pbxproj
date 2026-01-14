@@ -50,6 +50,9 @@
 		A1000024 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000024 /* NotificationService.swift */; };
 		A1000025 /* PostDetailFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000025 /* PostDetailFeature.swift */; };
 		A1000026 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000026 /* PostDetailView.swift */; };
+		A1000027 /* PushNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027 /* PushNotificationService.swift */; };
+		A1000028 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028 /* AppDelegate.swift */; };
+		A1000029 /* PostLimitExplanationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029 /* PostLimitExplanationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -91,6 +94,10 @@
 		A2000024 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		A2000025 /* PostDetailFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailFeature.swift; sourceTree = "<group>"; };
 		A2000026 /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
+		A2000027 /* PushNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationService.swift; sourceTree = "<group>"; };
+		A2000028 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A2000029 /* PostLimitExplanationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLimitExplanationView.swift; sourceTree = "<group>"; };
+		A200002A /* ThisDay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThisDay.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,6 +137,7 @@
 				A200000C /* Assets.xcassets */,
 				A2000022 /* Secrets.json */,
 				A2000023 /* Secrets.example.json */,
+				A200002A /* ThisDay.entitlements */,
 			);
 			path = ThisDay;
 			sourceTree = "<group>";
@@ -182,6 +190,7 @@
 			children = (
 				A2000007 /* AppFeature.swift */,
 				A2000008 /* AppView.swift */,
+				A2000028 /* AppDelegate.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -193,6 +202,7 @@
 				A200000A /* PhotoGridView.swift */,
 				A200001D /* CountdownTimerView.swift */,
 				A200001E /* PhotoViewerView.swift */,
+				A2000029 /* PostLimitExplanationView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -235,6 +245,7 @@
 				A200001A /* Dependencies.swift */,
 				A2000021 /* FollowService.swift */,
 				A2000024 /* NotificationService.swift */,
+				A2000027 /* PushNotificationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -392,6 +403,9 @@
 				A1000024 /* NotificationService.swift in Sources */,
 				A1000025 /* PostDetailFeature.swift in Sources */,
 				A1000026 /* PostDetailView.swift in Sources */,
+				A1000027 /* PushNotificationService.swift in Sources */,
+				A1000028 /* AppDelegate.swift in Sources */,
+				A1000029 /* PostLimitExplanationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -522,6 +536,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ThisDay/ThisDay.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A6GVRYGG7C;
@@ -550,6 +565,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ThisDay/ThisDay.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A6GVRYGG7C;

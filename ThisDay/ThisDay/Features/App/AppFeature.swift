@@ -21,6 +21,9 @@ struct AppFeature {
         /// Count of unread notifications for badge
         var unreadNotificationsCount: Int = 0
         
+        /// Track if initial auth setup is complete
+        var hasCompletedInitialSetup: Bool = false
+        
         /// Whether the user can create a new post today
         var canPostToday: Bool {
             guard let lastPostDate else { return true }
@@ -39,6 +42,21 @@ struct AppFeature {
             case notifications
             case profile
         }
+        
+        /// Initialize with instant auth state from cached session
+        init() {
+            @Dependency(\.authClient) var authClient
+            if let userId = authClient.cachedUserId() {
+                self.authState = .authenticated(userId)
+            } else {
+                self.authState = .unauthenticated
+            }
+        }
+        
+        /// Initialize with explicit auth state (for previews/tests)
+        init(authState: AuthenticationState) {
+            self.authState = authState
+        }
     }
     
     enum Action {
@@ -54,12 +72,17 @@ struct AppFeature {
         case profile(ProfileFeature.Action)
         case lastPostDateLoaded(Date?)
         case currentUserLoaded(Result<User, Error>)
+        // Push notification actions
+        case requestPushPermission
+        case pushPermissionResult(Bool)
+        case pushNotificationTapped(type: String, postId: UUID?, actorId: UUID?)
     }
     
     @Dependency(\.authClient) var authClient
     @Dependency(\.postClient) var postClient
     @Dependency(\.profileClient) var profileClient
     @Dependency(\.notificationClient) var notificationClient
+    @Dependency(\.pushNotificationClient) var pushNotificationClient
     
     var body: some ReducerOf<Self> {
         Scope(state: \.auth, action: \.auth) {
@@ -90,7 +113,14 @@ struct AppFeature {
             case .authStateChanged(let authState):
                 switch authState {
                 case .authenticated(let userId):
+                    // Skip duplicate events after initial setup
+                    if state.hasCompletedInitialSetup,
+                       case .authenticated(let existingId) = state.authState,
+                       existingId == userId {
+                        return .none
+                    }
                     state.authState = .authenticated(userId)
+                    state.hasCompletedInitialSetup = true
                     // Reset features when user authenticates
                     state.timeline = TimelineFeature.State()
                     state.profile = ProfileFeature.State()
@@ -119,10 +149,18 @@ struct AppFeature {
                             }
                         },
                         // Start realtime notifications subscription
-                        .send(.notifications(.startRealtimeSubscription))
+                        .send(.notifications(.startRealtimeSubscription)),
+                        // Request push notification permission
+                        .send(.requestPushPermission)
                     )
                 case .unauthenticated:
+                    // Skip duplicate events after initial setup
+                    if state.hasCompletedInitialSetup,
+                       case .unauthenticated = state.authState {
+                        return .none
+                    }
                     state.authState = .unauthenticated
+                    state.hasCompletedInitialSetup = true
                     // Reset everything on sign out
                     state.currentUser = nil
                     state.auth = AuthFeature.State()
@@ -133,9 +171,11 @@ struct AppFeature {
                     state.selectedTab = .timeline
                     state.lastPostDate = nil
                     state.unreadNotificationsCount = 0
-                    // Unsubscribe from realtime notifications
-                    return .run { [notificationClient] _ in
+                    // Unsubscribe from realtime notifications and remove push tokens
+                    return .run { [notificationClient, pushNotificationClient] _ in
                         await notificationClient.unsubscribe()
+                        await pushNotificationClient.unregisterCurrentUser()
+                        await pushNotificationClient.clearBadge()
                     }
                 }
                 
@@ -200,6 +240,10 @@ struct AppFeature {
                 state.currentUser = user
                 return .none
                 
+            case .profile(.delegate(.followStateChanged)):
+                // Refresh timeline to include/exclude the followed/unfollowed user's posts
+                return .send(.timeline(.refresh))
+                
             case .timeline(.deleteCompleted(.success(let postId))):
                 // Also remove from profile posts if loaded
                 if state.profile.posts[id: postId] != nil {
@@ -210,8 +254,37 @@ struct AppFeature {
                 
             case .notifications(.delegate(.unreadCountChanged(let count))):
                 state.unreadNotificationsCount = count
+                // Update app badge
+                return .run { [pushNotificationClient] _ in
+                    await pushNotificationClient.setBadgeCount(count)
+                }
+                
+            case .requestPushPermission:
+                return .run { [pushNotificationClient] send in
+                    let granted = await pushNotificationClient.requestPermission()
+                    await send(.pushPermissionResult(granted))
+                }
+                
+            case .pushPermissionResult(let granted):
+                if granted {
+                    print("Push notifications enabled")
+                }
                 return .none
                 
+            case .pushNotificationTapped(let type, let postId, let actorId):
+                // Handle navigation based on notification type
+                switch type {
+                case "like", "comment":
+                    // Navigate to notifications tab to see the post
+                    state.selectedTab = .notifications
+                case "follow":
+                    // Navigate to notifications tab to see who followed
+                    state.selectedTab = .notifications
+                default:
+                    state.selectedTab = .notifications
+                }
+                return .none
+            
             case .auth, .timeline, .explore, .notifications, .profile:
                 return .none
             }

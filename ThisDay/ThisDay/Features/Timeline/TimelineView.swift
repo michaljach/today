@@ -7,6 +7,8 @@ struct TimelineView: View {
     var lastPostDate: Date?
     var onComposeTapped: (() -> Void)?
     
+    @State private var showPostLimitExplanation = false
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -86,8 +88,10 @@ struct TimelineView: View {
                 
                 // Floating countdown banner at top
                 if !canPostToday, let lastPostDate {
-                    CountdownTimerView(lastPostDate: lastPostDate, style: .floating)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                    CountdownTimerView(lastPostDate: lastPostDate, style: .floating) {
+                        showPostLimitExplanation = true
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -97,6 +101,11 @@ struct TimelineView: View {
             .sheet(item: $store.scope(state: \.destination?.comments, action: \.destination.comments)) { commentsStore in
                 CommentsView(store: commentsStore)
                     .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showPostLimitExplanation) {
+                PostLimitExplanationView()
+                    .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
             .toolbar {

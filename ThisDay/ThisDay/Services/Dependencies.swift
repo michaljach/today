@@ -10,6 +10,7 @@ struct AuthClient {
     var signOut: @Sendable () async throws -> Void
     var currentUserId: @Sendable () async -> UUID?
     var currentUser: @Sendable () async throws -> User?
+    var cachedUserId: @Sendable () -> UUID?
     var observeAuthChanges: @Sendable () -> AsyncStream<AuthState>
 }
 
@@ -43,12 +44,15 @@ extension AuthClient: DependencyKey {
             }
             return try await ProfileService.shared.getProfile(userId: userId)
         },
+        cachedUserId: {
+            AuthService.shared.cachedSession()?.user.id
+        },
         observeAuthChanges: {
             AsyncStream { continuation in
                 Task {
-                    // Check initial state
-                    if let userId = await AuthService.shared.currentUserId() {
-                        continuation.yield(.authenticated(userId))
+                    // Check initial state from cache (instant, no network)
+                    if let session = AuthService.shared.cachedSession() {
+                        continuation.yield(.authenticated(session.user.id))
                     } else {
                         continuation.yield(.unauthenticated)
                     }
@@ -77,6 +81,7 @@ extension AuthClient: DependencyKey {
         signOut: { },
         currentUserId: { User.mock1.id },
         currentUser: { .mock1 },
+        cachedUserId: { User.mock1.id },
         observeAuthChanges: {
             AsyncStream { continuation in
                 continuation.yield(.authenticated(User.mock1.id))
@@ -90,6 +95,7 @@ extension AuthClient: DependencyKey {
         signOut: unimplemented("\(Self.self).signOut"),
         currentUserId: unimplemented("\(Self.self).currentUserId"),
         currentUser: unimplemented("\(Self.self).currentUser"),
+        cachedUserId: unimplemented("\(Self.self).cachedUserId"),
         observeAuthChanges: unimplemented("\(Self.self).observeAuthChanges")
     )
 }
@@ -456,5 +462,67 @@ extension DependencyValues {
     var notificationClient: NotificationClient {
         get { self[NotificationClient.self] }
         set { self[NotificationClient.self] = newValue }
+    }
+}
+
+// MARK: - Push Notification Client Dependency
+
+import UserNotifications
+
+/// TCA Dependency for push notification operations
+struct PushNotificationClient {
+    var requestPermission: @Sendable () async -> Bool
+    var getAuthorizationStatus: @Sendable () async -> UNAuthorizationStatus
+    var registerDeviceToken: @Sendable (Data) async -> Void
+    var unregisterCurrentUser: @Sendable () async -> Void
+    var setBadgeCount: @Sendable (Int) async -> Void
+    var clearBadge: @Sendable () async -> Void
+}
+
+extension PushNotificationClient: DependencyKey {
+    static let liveValue = PushNotificationClient(
+        requestPermission: {
+            await PushNotificationService.shared.requestPermission()
+        },
+        getAuthorizationStatus: {
+            await PushNotificationService.shared.getAuthorizationStatus()
+        },
+        registerDeviceToken: { token in
+            await PushNotificationService.shared.registerDeviceToken(token)
+        },
+        unregisterCurrentUser: {
+            await PushNotificationService.shared.removeAllTokensForCurrentUser()
+        },
+        setBadgeCount: { count in
+            await PushNotificationService.shared.setBadgeCount(count)
+        },
+        clearBadge: {
+            await PushNotificationService.shared.clearBadge()
+        }
+    )
+    
+    static let previewValue = PushNotificationClient(
+        requestPermission: { true },
+        getAuthorizationStatus: { .authorized },
+        registerDeviceToken: { _ in },
+        unregisterCurrentUser: { },
+        setBadgeCount: { _ in },
+        clearBadge: { }
+    )
+    
+    static let testValue = PushNotificationClient(
+        requestPermission: unimplemented("\(Self.self).requestPermission"),
+        getAuthorizationStatus: unimplemented("\(Self.self).getAuthorizationStatus"),
+        registerDeviceToken: unimplemented("\(Self.self).registerDeviceToken"),
+        unregisterCurrentUser: unimplemented("\(Self.self).unregisterCurrentUser"),
+        setBadgeCount: unimplemented("\(Self.self).setBadgeCount"),
+        clearBadge: unimplemented("\(Self.self).clearBadge")
+    )
+}
+
+extension DependencyValues {
+    var pushNotificationClient: PushNotificationClient {
+        get { self[PushNotificationClient.self] }
+        set { self[PushNotificationClient.self] = newValue }
     }
 }
