@@ -31,6 +31,7 @@ struct NotificationsView: View {
                         }
                         .buttonStyle(.plain)
                         .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -105,6 +106,7 @@ struct NotificationRow: View {
             notificationIcon
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
     }
     
     private var notificationText: AttributedString {
