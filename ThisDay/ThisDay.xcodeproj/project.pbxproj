@@ -53,6 +53,7 @@
 		A1000027 /* PushNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000027 /* PushNotificationService.swift */; };
 		A1000028 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028 /* AppDelegate.swift */; };
 		A1000029 /* PostLimitExplanationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029 /* PostLimitExplanationView.swift */; };
+		A100002B /* PhotoViewerFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200002B /* PhotoViewerFeature.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +99,7 @@
 		A2000028 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A2000029 /* PostLimitExplanationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLimitExplanationView.swift; sourceTree = "<group>"; };
 		A200002A /* ThisDay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThisDay.entitlements; sourceTree = "<group>"; };
+		A200002B /* PhotoViewerFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewerFeature.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000001 /* ThisDayApp.swift */,
+				A2000028 /* AppDelegate.swift */,
 				A5000003 /* Models */,
 				A5000004 /* Features */,
 				A5000007 /* Views */,
@@ -167,6 +170,7 @@
 				A500000C /* Auth */,
 				A500000E /* Comments */,
 				A500000D /* Compose */,
+				A5000010 /* PhotoViewer */,
 				A500000F /* PostDetail */,
 				A5000005 /* Timeline */,
 				A5000008 /* Explore */,
@@ -190,7 +194,6 @@
 			children = (
 				A2000007 /* AppFeature.swift */,
 				A2000008 /* AppView.swift */,
-				A2000028 /* AppDelegate.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -201,7 +204,6 @@
 				A2000009 /* PostView.swift */,
 				A200000A /* PhotoGridView.swift */,
 				A200001D /* CountdownTimerView.swift */,
-				A200001E /* PhotoViewerView.swift */,
 				A2000029 /* PostLimitExplanationView.swift */,
 			);
 			path = Views;
@@ -284,6 +286,15 @@
 				A2000026 /* PostDetailView.swift */,
 			);
 			path = PostDetail;
+			sourceTree = "<group>";
+		};
+		A5000010 /* PhotoViewer */ = {
+			isa = PBXGroup;
+			children = (
+				A200002B /* PhotoViewerFeature.swift */,
+				A200001E /* PhotoViewerView.swift */,
+			);
+			path = PhotoViewer;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -406,6 +417,7 @@
 				A1000027 /* PushNotificationService.swift in Sources */,
 				A1000028 /* AppDelegate.swift in Sources */,
 				A1000029 /* PostLimitExplanationView.swift in Sources */,
+				A100002B /* PhotoViewerFeature.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

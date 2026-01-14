@@ -2,23 +2,12 @@ import ComposableArchitecture
 import SwiftUI
 
 struct PhotoViewerView: View {
-    let post: Post
-    @Binding var selectedIndex: Int
-    var onUserTapped: ((User) -> Void)?
-    var showInlineComments: Bool = false
+    @Bindable var store: StoreOf<PhotoViewerFeature>
     @Environment(\.dismiss) private var dismiss
-    
-    @State private var commentsStore: StoreOf<CommentsFeature>?
-    @State private var showCommentsSheet: Bool = false
-    
-    private var currentPhoto: Photo? {
-        guard selectedIndex < post.photos.count else { return nil }
-        return post.photos[selectedIndex]
-    }
     
     var body: some View {
         Group {
-            if showInlineComments {
+            if store.showInlineComments {
                 inlineCommentsLayout
             } else {
                 fullscreenLayout
@@ -26,14 +15,7 @@ struct PhotoViewerView: View {
         }
         .background(Color.black)
         .onAppear {
-            if showInlineComments && commentsStore == nil {
-                commentsStore = Store(
-                    initialState: CommentsFeature.State(post: post)
-                ) {
-                    CommentsFeature()
-                }
-                commentsStore?.send(.onAppear)
-            }
+            store.send(.onAppear)
         }
     }
     
@@ -47,29 +29,31 @@ struct PhotoViewerView: View {
                 .padding(.bottom, 12)
             
             // Photo carousel - below header
-            TabView(selection: $selectedIndex) {
-                ForEach(post.photos.indices, id: \.self) { index in
-                    PhotoPageView(photo: post.photos[index])
+            TabView(selection: $store.selectedIndex) {
+                ForEach(store.post.photos.indices, id: \.self) { index in
+                    PhotoPageView(photo: store.post.photos[index])
                         .tag(index)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: post.photos.count > 1 ? .automatic : .never))
+            .tabViewStyle(.page(indexDisplayMode: store.post.photos.count > 1 ? .automatic : .never))
             
             Spacer(minLength: 0)
         }
         .safeAreaInset(edge: .bottom) {
-            if let store = commentsStore {
+            if let commentsStore = store.scope(state: \.comments, action: \.comments) {
                 CommentsBottomBar(
-                    store: store,
-                    onTap: { showCommentsSheet = true }
+                    store: commentsStore,
+                    onTap: { store.send(.showCommentsSheet) }
                 )
             }
         }
-        .sheet(isPresented: $showCommentsSheet) {
-            if let store = commentsStore {
+        .sheet(isPresented: $store.showCommentsSheet) {
+            if let commentsStore = store.scope(state: \.comments, action: \.comments) {
                 CommentsSheetView(
-                    store: store,
-                    onUserTapped: onUserTapped
+                    store: commentsStore,
+                    onUserTapped: { user in
+                        store.send(.userTapped(user))
+                    }
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
@@ -80,27 +64,27 @@ struct PhotoViewerView: View {
     private var userHeaderOverlay: some View {
         HStack(spacing: 12) {
             Button {
-                if let user = post.user {
-                    onUserTapped?(user)
+                if let user = store.post.user {
+                    store.send(.userTapped(user))
                 }
             } label: {
-                AvatarView(url: post.user?.avatarURL, size: 36)
+                AvatarView(url: store.post.user?.avatarURL, size: 36)
             }
             .buttonStyle(.plain)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(post.user?.displayName ?? "Unknown")
+                Text(store.post.user?.displayName ?? "Unknown")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
-                Text("@\(post.user?.username ?? "unknown")")
+                Text("@\(store.post.user?.username ?? "unknown")")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.7))
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                if let user = post.user {
-                    onUserTapped?(user)
+                if let user = store.post.user {
+                    store.send(.userTapped(user))
                 }
             }
             
@@ -125,9 +109,9 @@ struct PhotoViewerView: View {
     
     private var fullscreenLayout: some View {
         ZStack {
-            TabView(selection: $selectedIndex) {
-                ForEach(post.photos.indices, id: \.self) { index in
-                    PhotoPageView(photo: post.photos[index])
+            TabView(selection: $store.selectedIndex) {
+                ForEach(store.post.photos.indices, id: \.self) { index in
+                    PhotoPageView(photo: store.post.photos[index])
                         .tag(index)
                 }
             }
@@ -144,14 +128,14 @@ struct PhotoViewerView: View {
     private var headerView: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                AvatarView(url: post.user?.avatarURL, size: 40)
+                AvatarView(url: store.post.user?.avatarURL, size: 40)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.user?.displayName ?? "Unknown")
+                    Text(store.post.user?.displayName ?? "Unknown")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(.white)
-                    Text("@\(post.user?.username ?? "unknown")")
+                    Text("@\(store.post.user?.username ?? "unknown")")
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.7))
                 }
@@ -160,8 +144,8 @@ struct PhotoViewerView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                if let user = post.user {
-                    onUserTapped?(user)
+                if let user = store.post.user {
+                    store.send(.userTapped(user))
                 }
             }
             .padding(.horizontal, 16)
@@ -179,8 +163,8 @@ struct PhotoViewerView: View {
     
     private var footerView: some View {
         VStack(spacing: 12) {
-            if post.photos.count > 1 {
-                Text("\(selectedIndex + 1) / \(post.photos.count)")
+            if store.post.photos.count > 1 {
+                Text("\(store.selectedIndex + 1) / \(store.post.photos.count)")
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.white)
@@ -190,7 +174,7 @@ struct PhotoViewerView: View {
                     .clipShape(Capsule())
             }
             
-            if let takenAt = currentPhoto?.takenAt {
+            if let takenAt = store.currentPhoto?.takenAt {
                 HStack(spacing: 6) {
                     Image(systemName: "camera")
                         .font(.caption)
@@ -205,16 +189,16 @@ struct PhotoViewerView: View {
             
             HStack(spacing: 24) {
                 HStack(spacing: 6) {
-                    Image(systemName: post.isLikedByCurrentUser ? "heart.fill" : "heart")
-                        .foregroundStyle(post.isLikedByCurrentUser ? .red : .white)
-                    Text("\(post.likesCount)")
+                    Image(systemName: store.post.isLikedByCurrentUser ? "heart.fill" : "heart")
+                        .foregroundStyle(store.post.isLikedByCurrentUser ? .red : .white)
+                    Text("\(store.post.likesCount)")
                         .foregroundStyle(.white)
                 }
                 .font(.subheadline)
                 
                 HStack(spacing: 6) {
                     Image(systemName: "bubble.right")
-                    Text("\(post.commentsCount)")
+                    Text("\(store.post.commentsCount)")
                 }
                 .font(.subheadline)
                 .foregroundStyle(.white)
@@ -622,20 +606,34 @@ struct PhotoPageView: View {
     }
 }
 
+// MARK: - Previews
+
 #Preview("Fullscreen") {
     PhotoViewerView(
-        post: Post.mockPosts[0],
-        selectedIndex: .constant(0),
-        showInlineComments: false
+        store: Store(
+            initialState: PhotoViewerFeature.State(
+                post: Post.mockPosts[0],
+                selectedIndex: 0,
+                showInlineComments: false
+            )
+        ) {
+            PhotoViewerFeature()
+        }
     )
     .presentationBackground(.black)
 }
 
 #Preview("With Inline Comments") {
     PhotoViewerView(
-        post: Post.mockPosts[0],
-        selectedIndex: .constant(0),
-        showInlineComments: true
+        store: Store(
+            initialState: PhotoViewerFeature.State(
+                post: Post.mockPosts[0],
+                selectedIndex: 0,
+                showInlineComments: true
+            )
+        ) {
+            PhotoViewerFeature()
+        }
     )
     .presentationBackground(.black)
 }

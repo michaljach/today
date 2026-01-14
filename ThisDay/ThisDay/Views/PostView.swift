@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import SwiftUI
 
 struct AvatarView: View {
@@ -57,7 +58,8 @@ struct PostView: View {
   var onLikeTapped: ((Post) -> Void)?
   var onCommentsTapped: ((Post) -> Void)?
   
-  @State private var selectedPhotoIndex: Int?
+  @State private var showPhotoViewer = false
+  @State private var selectedPhotoIndex: Int = 0
   
   private var isOwnPost: Bool {
     guard let currentUserId else { return false }
@@ -86,6 +88,7 @@ struct PostView: View {
       // Photo grid
       PhotoGridView(photos: post.photos) { index in
         selectedPhotoIndex = index
+        showPhotoViewer = true
       }
       
       // Engagement stats
@@ -113,26 +116,20 @@ struct PostView: View {
       }
       .font(.subheadline)
     }
-    .sheet(isPresented: Binding(
-      get: { selectedPhotoIndex != nil },
-      set: { if !$0 { selectedPhotoIndex = nil } }
-    )) {
-      if let index = selectedPhotoIndex {
-        PhotoViewerView(
-          post: post,
-          selectedIndex: Binding(
-            get: { selectedPhotoIndex ?? 0 },
-            set: { selectedPhotoIndex = $0 }
-          ),
-          onUserTapped: { user in
-            selectedPhotoIndex = nil
-            onProfileTapped?(user)
-          },
-          showInlineComments: true
-        )
-        .presentationBackground(.black)
-        .presentationDragIndicator(.visible)
-      }
+    .sheet(isPresented: $showPhotoViewer) {
+      PhotoViewerView(
+        store: Store(
+          initialState: PhotoViewerFeature.State(
+            post: post,
+            selectedIndex: selectedPhotoIndex,
+            showInlineComments: true
+          )
+        ) {
+          PhotoViewerFeature()
+        }
+      )
+      .presentationBackground(.black)
+      .presentationDragIndicator(.visible)
     }
   }
 }

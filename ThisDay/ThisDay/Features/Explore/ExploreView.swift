@@ -55,13 +55,15 @@ struct ExploreView: View {
         )) {
             if let post = selectedPost {
                 PhotoViewerView(
-                    post: post,
-                    selectedIndex: $selectedPhotoIndex,
-                    onUserTapped: { user in
-                        selectedPost = nil
-                        store.send(.userTapped(user))
-                    },
-                    showInlineComments: true
+                    store: Store(
+                        initialState: PhotoViewerFeature.State(
+                            post: post,
+                            selectedIndex: selectedPhotoIndex,
+                            showInlineComments: true
+                        )
+                    ) {
+                        PhotoViewerFeature()
+                    }
                 )
                 .presentationBackground(.black)
                 .presentationDragIndicator(.visible)
