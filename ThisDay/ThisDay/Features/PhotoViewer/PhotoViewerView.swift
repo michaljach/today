@@ -94,14 +94,16 @@ struct PhotoViewerView: View {
             
             Spacer()
             
-            // Close button - native iOS style
+            // Close button
             Button {
                 dismiss()
             } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 28))
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, .white.opacity(0.2))
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(.white.opacity(0.2))
+                    .clipShape(Circle())
             }
         }
         .padding(.horizontal, 16)
