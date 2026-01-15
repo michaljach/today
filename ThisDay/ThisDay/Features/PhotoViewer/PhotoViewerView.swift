@@ -33,6 +33,7 @@ struct PhotoViewerView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: store.post.photos.count > 1 ? .automatic : .never))
+                .ignoresSafeArea(edges: .top)
                 
                 // Comments overlay at bottom
                 if let commentsStore = store.scope(state: \.comments, action: \.comments) {
