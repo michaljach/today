@@ -24,7 +24,7 @@ struct PhotoViewerView: View {
     
     private var inlineCommentsLayout: some View {
         NavigationStack {
-            VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
                 // Photo carousel
                 TabView(selection: $store.selectedIndex) {
                     ForEach(store.post.photos.indices, id: \.self) { index in
@@ -34,19 +34,24 @@ struct PhotoViewerView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: store.post.photos.count > 1 ? .automatic : .never))
                 
-                Spacer(minLength: 0)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .onTapGesture {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            }
-            .safeAreaInset(edge: .bottom) {
+                // Comments overlay at bottom
                 if let commentsStore = store.scope(state: \.comments, action: \.comments) {
                     CommentsBottomBar(
                         store: commentsStore,
                         onTap: { store.send(.showCommentsSheet) }
                     )
+                    .background(
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.7)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                 }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
