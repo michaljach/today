@@ -28,16 +28,11 @@ struct TimelineView: View {
                         }
                     } else if store.posts.isEmpty {
                         ContentUnavailableView {
-                            Label("No Posts", systemImage: "photo.on.rectangle.angled")
+                            Label("No Posts Yet", systemImage: "person.2")
                         } description: {
-                            Text("Be the first to share a moment!")
+                            Text("Follow some profiles to see their moments here!")
                         } actions: {
-                            if canPostToday, let onComposeTapped {
-                                Button("Create Post") {
-                                    onComposeTapped()
-                                }
-                                .buttonStyle(.borderedProminent)
-                            }
+                            EmptyView()
                         }
                     } else {
                         ScrollView {
