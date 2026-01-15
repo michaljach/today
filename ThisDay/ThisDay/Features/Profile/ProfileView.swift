@@ -103,9 +103,9 @@ struct ProfileView: View {
             }
             
             HStack(spacing: 32) {
-                statItem(value: store.stats.postsCount, label: "Posts")
-                statItem(value: store.stats.followersCount, label: "Followers")
-                statItem(value: store.stats.followingCount, label: "Following")
+                statItem(value: store.stats.postsCount, label: "Posts", isLoading: store.isLoadingPosts)
+                statItem(value: store.stats.followersCount, label: "Followers", isLoading: store.isLoadingPosts)
+                statItem(value: store.stats.followingCount, label: "Following", isLoading: store.isLoadingPosts)
             }
             .padding(.top, 8)
             
@@ -156,14 +156,21 @@ struct ProfileView: View {
         }
     }
     
-    private func statItem(value: Int, label: String) -> some View {
+    private func statItem(value: Int, label: String, isLoading: Bool = false) -> some View {
         VStack {
-            Text(formatNumber(value))
-                .font(.headline)
+            if isLoading {
+                ProgressView()
+                    .scaleEffect(0.7)
+                    .frame(height: 20)
+            } else {
+                Text(formatNumber(value))
+                    .font(.headline)
+            }
             Text(label)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .frame(minWidth: 60)
     }
     
     private func formatNumber(_ number: Int) -> String {
