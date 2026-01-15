@@ -109,7 +109,7 @@ struct CommentsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(.systemBackground))
+//        .background(Color(.systemBackground))
     }
     
     private var canSubmit: Bool {
