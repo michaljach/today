@@ -54,6 +54,8 @@
 		A1000028 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000028 /* AppDelegate.swift */; };
 		A1000029 /* PostLimitExplanationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029 /* PostLimitExplanationView.swift */; };
 		A100002B /* PhotoViewerFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200002B /* PhotoViewerFeature.swift */; };
+		A100002C /* EditProfileFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200002C /* EditProfileFeature.swift */; };
+		A100002D /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200002D /* EditProfileView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -100,6 +102,8 @@
 		A2000029 /* PostLimitExplanationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLimitExplanationView.swift; sourceTree = "<group>"; };
 		A200002A /* ThisDay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThisDay.entitlements; sourceTree = "<group>"; };
 		A200002B /* PhotoViewerFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewerFeature.swift; sourceTree = "<group>"; };
+		A200002C /* EditProfileFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileFeature.swift; sourceTree = "<group>"; };
+		A200002D /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -232,6 +236,8 @@
 			children = (
 				A2000011 /* ProfileFeature.swift */,
 				A2000012 /* ProfileView.swift */,
+				A200002C /* EditProfileFeature.swift */,
+				A200002D /* EditProfileView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -418,6 +424,8 @@
 				A1000028 /* AppDelegate.swift in Sources */,
 				A1000029 /* PostLimitExplanationView.swift in Sources */,
 				A100002B /* PhotoViewerFeature.swift in Sources */,
+				A100002C /* EditProfileFeature.swift in Sources */,
+				A100002D /* EditProfileView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

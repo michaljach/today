@@ -189,6 +189,15 @@ actor ProfileService {
         return try await getProfile(userId: userId)
     }
     
+    /// Fetches the current authenticated user's profile with stats
+    /// - Returns: The current user's profile with stats populated
+    func getCurrentUserProfileWithStats() async throws -> User {
+        guard let userId = await AuthService.shared.currentUserId() else {
+            throw ProfileError.notAuthenticated
+        }
+        return try await getProfileWithStats(userId: userId)
+    }
+    
     /// Searches for profiles by username or display name
     /// - Parameters:
     ///   - query: The search query

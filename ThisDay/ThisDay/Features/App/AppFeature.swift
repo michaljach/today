@@ -141,7 +141,7 @@ struct AppFeature {
                         },
                         .run { send in
                             do {
-                                let user = try await profileClient.getCurrentUserProfile()
+                                let user = try await profileClient.getCurrentUserProfileWithStats()
                                 await send(.currentUserLoaded(.success(user)))
                             } catch {
                                 print("Failed to fetch current user profile: \(error)")

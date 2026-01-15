@@ -42,6 +42,8 @@ struct ProfileFeature {
         case dataLoaded(Result<(User, [Post], Int, Int, Bool), Error>)
         case signOutTapped
         case signOutCompleted(Result<Void, Error>)
+        case editProfileTapped
+        case emailLoaded(String?)
         case avatarTapped
         case avatarSelected(Data)
         case avatarUploaded(Result<URL, Error>)
@@ -65,6 +67,7 @@ struct ProfileFeature {
     @Reducer(state: .equatable)
     enum Destination {
         case comments(CommentsFeature)
+        case editProfile(EditProfileFeature)
     }
     
     @Dependency(\.authClient) var authClient
@@ -228,6 +231,21 @@ struct ProfileFeature {
                 state.errorMessage = error.localizedDescription
                 return .none
                 
+            case .editProfileTapped:
+                guard let user = state.user else { return .none }
+                return .run { send in
+                    let email = await authClient.currentUserEmail()
+                    await send(.emailLoaded(email))
+                }
+                
+            case .emailLoaded(let email):
+                guard let user = state.user else { return .none }
+                state.destination = .editProfile(EditProfileFeature.State(
+                    user: user,
+                    email: email ?? ""
+                ))
+                return .none
+                
             case .avatarTapped:
                 // This action is handled by the view to show the photo picker
                 return .none
@@ -345,6 +363,10 @@ struct ProfileFeature {
             case .commentsTapped(let post):
                 state.destination = .comments(CommentsFeature.State(post: post))
                 return .none
+                
+            case .destination(.presented(.editProfile(.delegate(.profileUpdated(let user))))):
+                state.user = user
+                return .send(.delegate(.profileUpdated(user)))
                 
             case .destination:
                 return .none

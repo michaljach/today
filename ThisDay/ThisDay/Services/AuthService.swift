@@ -106,6 +106,19 @@ actor AuthService {
         try await supabase.auth.update(user: UserAttributes(password: newPassword))
     }
     
+    /// Updates the user's email address (requires authenticated session)
+    /// - Parameter newEmail: The new email address
+    /// - Note: A confirmation email will be sent to the new address
+    func updateEmail(newEmail: String) async throws {
+        try await supabase.auth.update(user: UserAttributes(email: newEmail))
+    }
+    
+    /// Gets the current user's email address
+    /// - Returns: The current user's email or nil if not signed in
+    func currentUserEmail() async -> String? {
+        try? await supabase.auth.session.user.email
+    }
+    
     // MARK: - Auth State
     
     /// Stream of authentication state changes

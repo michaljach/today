@@ -73,6 +73,9 @@ struct ProfileView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(item: $store.scope(state: \.destination?.editProfile, action: \.destination.editProfile)) { editProfileStore in
+            EditProfileView(store: editProfileStore)
+        }
     }
     
     private func profileHeader(user: User) -> some View {
@@ -113,7 +116,7 @@ struct ProfileView: View {
             
             if store.isCurrentUser {
                 Button {
-                    // Edit profile action
+                    store.send(.editProfileTapped)
                 } label: {
                     Text("Edit Profile")
                         .font(.subheadline)

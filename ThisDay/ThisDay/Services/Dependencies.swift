@@ -10,8 +10,11 @@ struct AuthClient {
     var signOut: @Sendable () async throws -> Void
     var currentUserId: @Sendable () async -> UUID?
     var currentUser: @Sendable () async throws -> User?
+    var currentUserEmail: @Sendable () async -> String?
     var cachedUserId: @Sendable () -> UUID?
     var observeAuthChanges: @Sendable () -> AsyncStream<AuthState>
+    var updateEmail: @Sendable (String) async throws -> Void
+    var updatePassword: @Sendable (String) async throws -> Void
 }
 
 enum AuthState: Equatable {
@@ -44,6 +47,9 @@ extension AuthClient: DependencyKey {
             }
             return try await ProfileService.shared.getProfile(userId: userId)
         },
+        currentUserEmail: {
+            await AuthService.shared.currentUserEmail()
+        },
         cachedUserId: {
             AuthService.shared.cachedSession()?.user.id
         },
@@ -72,6 +78,12 @@ extension AuthClient: DependencyKey {
                     }
                 }
             }
+        },
+        updateEmail: { newEmail in
+            try await AuthService.shared.updateEmail(newEmail: newEmail)
+        },
+        updatePassword: { newPassword in
+            try await AuthService.shared.updatePassword(newPassword: newPassword)
         }
     )
     
@@ -81,12 +93,15 @@ extension AuthClient: DependencyKey {
         signOut: { },
         currentUserId: { User.mock1.id },
         currentUser: { .mock1 },
+        currentUserEmail: { "john@example.com" },
         cachedUserId: { User.mock1.id },
         observeAuthChanges: {
             AsyncStream { continuation in
                 continuation.yield(.authenticated(User.mock1.id))
             }
-        }
+        },
+        updateEmail: { _ in },
+        updatePassword: { _ in }
     )
     
     static let testValue = AuthClient(
@@ -95,8 +110,11 @@ extension AuthClient: DependencyKey {
         signOut: unimplemented("\(Self.self).signOut"),
         currentUserId: unimplemented("\(Self.self).currentUserId"),
         currentUser: unimplemented("\(Self.self).currentUser"),
+        currentUserEmail: unimplemented("\(Self.self).currentUserEmail"),
         cachedUserId: unimplemented("\(Self.self).cachedUserId"),
-        observeAuthChanges: unimplemented("\(Self.self).observeAuthChanges")
+        observeAuthChanges: unimplemented("\(Self.self).observeAuthChanges"),
+        updateEmail: unimplemented("\(Self.self).updateEmail"),
+        updatePassword: unimplemented("\(Self.self).updatePassword")
     )
 }
 
@@ -113,7 +131,10 @@ extension DependencyValues {
 struct ProfileClient {
     var getProfile: @Sendable (UUID) async throws -> User
     var getCurrentUserProfile: @Sendable () async throws -> User
+    var getCurrentUserProfileWithStats: @Sendable () async throws -> User
     var updateProfile: @Sendable (String?, URL?) async throws -> User
+    var updateUsername: @Sendable (String) async throws -> User
+    var isUsernameAvailable: @Sendable (String) async throws -> Bool
     var searchProfiles: @Sendable (String) async throws -> [User]
     var searchProfilesWithStats: @Sendable (String) async throws -> [User]
     var getAllUsers: @Sendable (Int) async throws -> [User]
@@ -128,11 +149,20 @@ extension ProfileClient: DependencyKey {
         getCurrentUserProfile: {
             try await ProfileService.shared.getCurrentUserProfile()
         },
+        getCurrentUserProfileWithStats: {
+            try await ProfileService.shared.getCurrentUserProfileWithStats()
+        },
         updateProfile: { displayName, avatarURL in
             try await ProfileService.shared.updateCurrentUserProfile(
                 displayName: displayName,
                 avatarURL: avatarURL
             )
+        },
+        updateUsername: { username in
+            try await ProfileService.shared.updateUsername(username)
+        },
+        isUsernameAvailable: { username in
+            try await ProfileService.shared.isUsernameAvailable(username)
         },
         searchProfiles: { query in
             try await ProfileService.shared.searchProfiles(query: query)
@@ -151,7 +181,10 @@ extension ProfileClient: DependencyKey {
     static let previewValue = ProfileClient(
         getProfile: { _ in .mock1 },
         getCurrentUserProfile: { .mock1 },
+        getCurrentUserProfileWithStats: { .mock1 },
         updateProfile: { _, _ in .mock1 },
+        updateUsername: { _ in .mock1 },
+        isUsernameAvailable: { username in username != "taken" },
         searchProfiles: { _ in [.mock1, .mock2, .mock3] },
         searchProfilesWithStats: { _ in [.mock1, .mock2, .mock3] },
         getAllUsers: { _ in [.mock1, .mock2, .mock3, .mock4] },
@@ -161,7 +194,10 @@ extension ProfileClient: DependencyKey {
     static let testValue = ProfileClient(
         getProfile: unimplemented("\(Self.self).getProfile"),
         getCurrentUserProfile: unimplemented("\(Self.self).getCurrentUserProfile"),
+        getCurrentUserProfileWithStats: unimplemented("\(Self.self).getCurrentUserProfileWithStats"),
         updateProfile: unimplemented("\(Self.self).updateProfile"),
+        updateUsername: unimplemented("\(Self.self).updateUsername"),
+        isUsernameAvailable: unimplemented("\(Self.self).isUsernameAvailable"),
         searchProfiles: unimplemented("\(Self.self).searchProfiles"),
         searchProfilesWithStats: unimplemented("\(Self.self).searchProfilesWithStats"),
         getAllUsers: unimplemented("\(Self.self).getAllUsers"),
