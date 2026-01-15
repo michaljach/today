@@ -63,6 +63,10 @@ struct ExploreView: View {
                         )
                     ) {
                         PhotoViewerFeature()
+                    },
+                    onUserTapped: { user in
+                        selectedPost = nil
+                        store.send(.userTapped(user))
                     }
                 )
                 .presentationBackground(.black)

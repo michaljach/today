@@ -71,16 +71,13 @@ struct PhotoGridView: View {
         }
     }
     
-    // 5 photos: left column (1 large), right column (2 stacked), bottom row (2)
+    // 5 photos: top row (3), bottom row (2)
     private var fivePhotos: some View {
         VStack(spacing: spacing) {
             HStack(spacing: spacing) {
                 TappablePhotoThumbnail(photo: photos[0], index: 0, onTap: onPhotoTapped)
-                
-                VStack(spacing: spacing) {
-                    TappablePhotoThumbnail(photo: photos[1], index: 1, onTap: onPhotoTapped)
-                    TappablePhotoThumbnail(photo: photos[2], index: 2, onTap: onPhotoTapped)
-                }
+                TappablePhotoThumbnail(photo: photos[1], index: 1, onTap: onPhotoTapped)
+                TappablePhotoThumbnail(photo: photos[2], index: 2, onTap: onPhotoTapped)
             }
             HStack(spacing: spacing) {
                 TappablePhotoThumbnail(photo: photos[3], index: 3, onTap: onPhotoTapped)

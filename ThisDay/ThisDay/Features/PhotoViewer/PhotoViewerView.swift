@@ -4,6 +4,7 @@ import SwiftUI
 struct PhotoViewerView: View {
     @Bindable var store: StoreOf<PhotoViewerFeature>
     @Environment(\.dismiss) private var dismiss
+    var onUserTapped: ((User) -> Void)?
     
     var body: some View {
         Group {
@@ -53,6 +54,7 @@ struct PhotoViewerView: View {
                     Button {
                         if let user = store.post.user {
                             store.send(.userTapped(user))
+                            onUserTapped?(user)
                         }
                     } label: {
                         HStack(spacing: 8) {
@@ -66,18 +68,21 @@ struct PhotoViewerView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
+                        .padding(.horizontal, 4)
                         .contentShape(.capsule)
                     }
                     .buttonStyle(.plain)
+                    .fixedSize()
+                    .padding(.trailing, 8)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .symbolRenderingMode(.hierarchical)
-                            .font(.title2)
+                        Image(systemName: "xmark")
+                            .font(.body)
+                            .fontWeight(.semibold)
                     }
                 }
             }
@@ -138,6 +143,7 @@ struct PhotoViewerView: View {
             .onTapGesture {
                 if let user = store.post.user {
                     store.send(.userTapped(user))
+                    onUserTapped?(user)
                 }
             }
             .padding(.horizontal, 16)
@@ -252,12 +258,6 @@ private struct CommentsBottomBar: View {
                     .foregroundStyle(.white.opacity(0.7))
                     
                     Spacer()
-                    
-                    // Expand indicator
-                    Image(systemName: "chevron.up")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white.opacity(0.5))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -372,52 +372,35 @@ private struct CommentsSheetView: View {
     @Bindable var store: StoreOf<CommentsFeature>
     var onUserTapped: ((User) -> Void)?
     @FocusState private var isInputFocused: Bool
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header with stats
-            sheetHeader
-            
-            Divider()
-            
-            // Comments list
-            commentsListView
-            
-            Divider()
-            
-            // Input bar
-            commentInputBar
-        }
-    }
-    
-    private var sheetHeader: some View {
-        HStack(spacing: 20) {
-            // Like button
-            Button {
-                store.send(.likeTapped)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: store.isLikedByCurrentUser ? "heart.fill" : "heart")
-                        .foregroundStyle(store.isLikedByCurrentUser ? .red : .primary)
-                    Text("\(store.likesCount)")
+        NavigationStack {
+            VStack(spacing: 0) {
+                Divider()
+                
+                // Comments list
+                commentsListView
+                
+                Divider()
+                
+                // Input bar
+                commentInputBar
+            }
+            .navigationTitle("Comments")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.body)
+                            .fontWeight(.semibold)
+                    }
                 }
-                .font(.subheadline)
             }
-            .buttonStyle(.plain)
-            
-            // Comments count
-            HStack(spacing: 6) {
-                Image(systemName: "bubble.right")
-                Text("\(store.comments.count) comments")
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            
-            Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        .padding(.bottom, 12)
     }
     
     private var commentsListView: some View {
@@ -446,7 +429,7 @@ private struct CommentsSheetView: View {
                 }
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 0) {
+                    LazyVStack(spacing: 12) {
                         ForEach(store.comments) { comment in
                             CommentRow(
                                 comment: comment,
@@ -454,6 +437,7 @@ private struct CommentsSheetView: View {
                             )
                         }
                     }
+                    .padding(.vertical, 8)
                 }
             }
         }
@@ -461,19 +445,31 @@ private struct CommentsSheetView: View {
     
     private var commentInputBar: some View {
         HStack(spacing: 10) {
-            TextField("Add a comment...", text: $store.newCommentText)
-                .textFieldStyle(.plain)
-                .font(.subheadline)
-                .focused($isInputFocused)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .onSubmit {
-                    if canSubmit {
-                        store.send(.submitComment)
-                    }
+            Group {
+                if #available(iOS 26.0, *) {
+                    TextField("Add a comment...", text: $store.newCommentText)
+                        .textFieldStyle(.plain)
+                        .font(.subheadline)
+                        .focused($isInputFocused)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .glassEffect()
+                } else {
+                    TextField("Add a comment...", text: $store.newCommentText)
+                        .textFieldStyle(.plain)
+                        .font(.subheadline)
+                        .focused($isInputFocused)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                 }
+            }
+            .onSubmit {
+                if canSubmit {
+                    store.send(.submitComment)
+                }
+            }
             
             Button {
                 store.send(.submitComment)

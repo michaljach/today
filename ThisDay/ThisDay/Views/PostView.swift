@@ -128,6 +128,10 @@ struct PostView: View {
           )
         ) {
           PhotoViewerFeature()
+        },
+        onUserTapped: { user in
+          selectedPhotoIndex = nil
+          onProfileTapped?(user)
         }
       )
       .presentationBackground(.black)
