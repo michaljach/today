@@ -23,6 +23,10 @@ struct EditProfileFeature {
         var errorMessage: String?
         var successMessage: String?
         
+        var isUsernameFormatValid: Bool {
+            Self.isValidUsernameFormat(username)
+        }
+        
         // Track which fields have changed
         var hasProfileChanges: Bool {
             displayName != user.displayName || username != user.username
@@ -49,7 +53,7 @@ struct EditProfileFeature {
             
             // Validate username
             if username != user.username {
-                guard usernameAvailable == true else { return false }
+                guard usernameAvailable == true && isUsernameFormatValid else { return false }
             }
             
             // Validate password if changing
@@ -76,6 +80,18 @@ struct EditProfileFeature {
         private func isValidEmail(_ email: String) -> Bool {
             let emailRegex = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
             return email.range(of: emailRegex, options: .regularExpression) != nil
+        }
+        
+        /// Validates username format: only lowercase letters, numbers, and underscores allowed
+        static func isValidUsernameFormat(_ username: String) -> Bool {
+            let pattern = "^[a-z0-9_]+$"
+            return username.range(of: pattern, options: .regularExpression) != nil
+        }
+        
+        /// Sanitizes username by removing invalid characters
+        static func sanitizeUsername(_ username: String) -> String {
+            let lowercased = username.lowercased()
+            return lowercased.filter { $0.isLetter || $0.isNumber || $0 == "_" }
         }
     }
     
@@ -111,12 +127,18 @@ struct EditProfileFeature {
         Reduce { state, action in
             switch action {
             case .binding(\.username):
+                // Sanitize username - remove invalid characters and lowercase
+                let sanitized = State.sanitizeUsername(state.username)
+                if sanitized != state.username {
+                    state.username = sanitized
+                }
+                
                 // Reset availability when username changes
                 state.usernameAvailable = nil
                 state.errorMessage = nil
                 
-                // Don't check if same as current
-                guard state.username != state.user.username else {
+                // Don't check if same as current or invalid format
+                guard state.username != state.user.username, state.isUsernameFormatValid else {
                     return .cancel(id: CancelID.usernameCheck)
                 }
                 

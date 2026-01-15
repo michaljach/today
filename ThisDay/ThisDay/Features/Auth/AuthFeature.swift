@@ -20,15 +20,31 @@ struct AuthFeature {
             case signUp
         }
         
+        var isUsernameFormatValid: Bool {
+            Self.isValidUsernameFormat(username)
+        }
+        
         var isFormValid: Bool {
             switch mode {
             case .signIn:
                 return !email.isEmpty && !password.isEmpty
             case .signUp:
                 let basicFieldsValid = !email.isEmpty && !password.isEmpty && !username.isEmpty && !displayName.isEmpty
-                let usernameValid = usernameAvailable == true
+                let usernameValid = usernameAvailable == true && isUsernameFormatValid
                 return basicFieldsValid && usernameValid
             }
+        }
+        
+        /// Validates username format: only lowercase letters, numbers, and underscores allowed
+        static func isValidUsernameFormat(_ username: String) -> Bool {
+            let pattern = "^[a-z0-9_]+$"
+            return username.range(of: pattern, options: .regularExpression) != nil
+        }
+        
+        /// Sanitizes username by removing invalid characters
+        static func sanitizeUsername(_ username: String) -> String {
+            let lowercased = username.lowercased()
+            return lowercased.filter { $0.isLetter || $0.isNumber || $0 == "_" }
         }
     }
     
@@ -60,12 +76,18 @@ struct AuthFeature {
         Reduce { state, action in
             switch action {
             case .binding(\.username):
+                // Sanitize username - remove invalid characters and lowercase
+                let sanitized = State.sanitizeUsername(state.username)
+                if sanitized != state.username {
+                    state.username = sanitized
+                }
+                
                 // Reset availability when username changes
                 state.usernameAvailable = nil
                 state.errorMessage = nil
                 
-                // Don't check if empty
-                guard !state.username.isEmpty else {
+                // Don't check if empty or invalid format
+                guard !state.username.isEmpty, state.isUsernameFormatValid else {
                     return .cancel(id: CancelID.usernameCheck)
                 }
                 
