@@ -90,8 +90,8 @@ actor PostService {
         
         post.photos = photos
         
-        // Fetch the user profile
-        post.user = try await ProfileService.shared.getProfile(userId: post.userId)
+        // Fetch the user profile with stats for instant profile display
+        post.user = try await ProfileService.shared.getProfileWithStats(userId: post.userId)
         
         return post
     }
@@ -236,8 +236,8 @@ actor PostService {
             .execute()
             .value
         
-        // Fetch the user once
-        let user = try await ProfileService.shared.getProfile(userId: userId)
+        // Fetch the user once with stats for instant profile display
+        let user = try await ProfileService.shared.getProfileWithStats(userId: userId)
         
         // Group photos by post ID
         let photosByPostId = Dictionary(grouping: allPhotos) { $0.postId ?? UUID() }
@@ -462,9 +462,9 @@ actor PostService {
         
         guard !comments.isEmpty else { return [] }
         
-        // Fetch all users for these comments
+        // Fetch all users with stats for these comments
         let userIds = Array(Set(comments.map { $0.userId }))
-        let users = try await ProfileService.shared.getProfiles(userIds: userIds)
+        let users = try await ProfileService.shared.getProfilesWithStats(userIds: userIds)
         let userDict = Dictionary(uniqueKeysWithValues: users.map { ($0.id, $0) })
         
         // Populate comments with users
@@ -495,8 +495,8 @@ actor PostService {
             .execute()
             .value
         
-        // Fetch the user for this comment
-        comment.user = try await ProfileService.shared.getProfile(userId: userId)
+        // Fetch the user with stats for this comment
+        comment.user = try await ProfileService.shared.getProfileWithStats(userId: userId)
         
         return comment
     }

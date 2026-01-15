@@ -115,9 +115,9 @@ actor NotificationService {
         
         guard !notifications.isEmpty else { return [] }
         
-        // Fetch all actors for these notifications
+        // Fetch all actors with stats for instant profile display
         let actorIds = Array(Set(notifications.map { $0.actorId }))
-        let actors = try await ProfileService.shared.getProfiles(userIds: actorIds)
+        let actors = try await ProfileService.shared.getProfilesWithStats(userIds: actorIds)
         let actorDict = Dictionary(uniqueKeysWithValues: actors.map { ($0.id, $0) })
         
         // Populate notifications with actors
@@ -212,8 +212,8 @@ actor NotificationService {
                     do {
                         var notification = try insertion.decodeRecord(as: AppNotification.self, decoder: .iso8601)
                         
-                        // Fetch the actor for this notification
-                        if let actor = try? await ProfileService.shared.getProfile(userId: notification.actorId) {
+                        // Fetch the actor with stats for instant profile display
+                        if let actor = try? await ProfileService.shared.getProfileWithStats(userId: notification.actorId) {
                             notification.actor = actor
                         }
                         

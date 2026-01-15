@@ -79,8 +79,8 @@ struct ExploreFeature {
                     },
                     .run { send in
                         do {
-                            // Load suggested users to display
-                            let users = try await profileClient.getAllUsers(20)
+                            // Load suggested users with stats for instant profile display
+                            let users = try await profileClient.getAllUsersWithStats(20)
                             await send(.suggestedUsersLoaded(.success(users)))
                         } catch {
                             await send(.suggestedUsersLoaded(.failure(error)))
@@ -102,7 +102,8 @@ struct ExploreFeature {
                     },
                     .run { send in
                         do {
-                            let users = try await profileClient.getAllUsers(20)
+                            // Load suggested users with stats for instant profile display
+                            let users = try await profileClient.getAllUsersWithStats(20)
                             await send(.suggestedUsersLoaded(.success(users)))
                         } catch {
                             await send(.suggestedUsersLoaded(.failure(error)))
@@ -136,7 +137,8 @@ struct ExploreFeature {
                 let query = state.searchQuery
                 return .run { send in
                     do {
-                        let users = try await profileClient.searchProfiles(query)
+                        // Search with stats for instant profile display
+                        let users = try await profileClient.searchProfilesWithStats(query)
                         await send(.searchResultsLoaded(.success(users)))
                     } catch {
                         await send(.searchResultsLoaded(.failure(error)))

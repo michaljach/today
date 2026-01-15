@@ -11,7 +11,6 @@ struct PostLimitExplanationView: View {
                     Image(systemName: "sparkles")
                         .font(.system(size: 48))
                         .foregroundStyle(.orange.gradient)
-                        .padding(.top, 20)
                     
                     // Title
                     Text("One Post Per Day")
@@ -49,11 +48,10 @@ struct PostLimitExplanationView: View {
                         )
                     }
                     .padding(.horizontal)
-                    
-                    Spacer(minLength: 20)
                 }
                 .padding()
             }
+            .scrollBounceBehavior(.basedOnSize)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -64,6 +62,7 @@ struct PostLimitExplanationView: View {
                 }
             }
         }
+        .presentationDetents([.medium])
     }
 }
 

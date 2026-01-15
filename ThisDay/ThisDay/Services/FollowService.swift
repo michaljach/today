@@ -116,12 +116,12 @@ actor FollowService {
     }
     
     /// Gets the list of users that the current user is following
-    /// - Returns: Array of User profiles
+    /// - Returns: Array of User profiles with stats
     func getFollowing() async throws -> [User] {
         let followingIds = try await getFollowingIds()
         guard !followingIds.isEmpty else { return [] }
         
-        return try await ProfileService.shared.getProfiles(userIds: followingIds)
+        return try await ProfileService.shared.getProfilesWithStats(userIds: followingIds)
     }
     
     /// Gets the list of user IDs who follow the current user

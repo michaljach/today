@@ -169,6 +169,17 @@ actor ProfileService {
         let followingCount: Int
     }
     
+    /// Fetches a single profile with stats
+    /// - Parameter userId: The UUID of the user
+    /// - Returns: User profile with stats populated
+    func getProfileWithStats(userId: UUID) async throws -> User {
+        let users = try await getProfilesWithStats(userIds: [userId])
+        guard let user = users.first else {
+            throw ProfileError.profileNotFound
+        }
+        return user
+    }
+    
     /// Fetches the current authenticated user's profile
     /// - Returns: The current user's profile
     func getCurrentUserProfile() async throws -> User {
@@ -193,6 +204,17 @@ actor ProfileService {
             .value
     }
     
+    /// Searches for profiles with stats by username or display name
+    /// - Parameters:
+    ///   - query: The search query
+    ///   - limit: Maximum number of results (default 20)
+    /// - Returns: Array of matching profiles with stats populated
+    func searchProfilesWithStats(query: String, limit: Int = 20) async throws -> [User] {
+        let users = try await searchProfiles(query: query, limit: limit)
+        guard !users.isEmpty else { return [] }
+        return try await getProfilesWithStats(userIds: users.map { $0.id })
+    }
+    
     /// Fetches all users (for explore/discovery)
     /// - Parameter limit: Maximum number of results (default 20)
     /// - Returns: Array of user profiles ordered by most recent
@@ -204,6 +226,15 @@ actor ProfileService {
             .limit(limit)
             .execute()
             .value
+    }
+    
+    /// Fetches all users with stats (for explore/discovery)
+    /// - Parameter limit: Maximum number of results (default 20)
+    /// - Returns: Array of user profiles with stats, ordered by most recent
+    func getAllUsersWithStats(limit: Int = 20) async throws -> [User] {
+        let users = try await getAllUsers(limit: limit)
+        guard !users.isEmpty else { return [] }
+        return try await getProfilesWithStats(userIds: users.map { $0.id })
     }
     
     // MARK: - Update Operations

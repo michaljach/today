@@ -23,6 +23,7 @@ struct NotificationsFeature {
         case markAllAsRead
         case markAllAsReadCompleted(Result<Void, Error>)
         case notificationTapped(AppNotification)
+        case actorTapped(User)
         case postLoaded(Result<Post, Error>)
         case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
@@ -158,6 +159,11 @@ struct NotificationsFeature {
                         }
                     }
                 }
+                
+            case .actorTapped(let user):
+                // Navigate to the actor's profile
+                state.destination = .profile(ProfileFeature.State(user: user, viewingUserId: user.id))
+                return .none
                 
             case .postLoaded(.success(let post)):
                 state.destination = .postDetail(PostDetailFeature.State(post: post))

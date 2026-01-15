@@ -24,12 +24,15 @@ struct NotificationsView: View {
                     emptyState
                 } else {
                     List(store.notifications) { notification in
-                        Button {
-                            store.send(.notificationTapped(notification))
-                        } label: {
-                            NotificationRow(notification: notification)
-                        }
-                        .buttonStyle(.plain)
+                        NotificationRow(
+                            notification: notification,
+                            onActorTapped: { actor in
+                                store.send(.actorTapped(actor))
+                            },
+                            onNotificationTapped: {
+                                store.send(.notificationTapped(notification))
+                            }
+                        )
                         .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
                     }
                     .listStyle(.plain)
@@ -74,33 +77,45 @@ struct NotificationsView: View {
 
 struct NotificationRow: View {
     let notification: AppNotification
+    let onActorTapped: (User) -> Void
+    let onNotificationTapped: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
-            // Avatar
+            // Avatar - tappable to go to profile
             if let actor = notification.actor {
-                AvatarView(url: actor.avatarURL, size: 44)
+                Button {
+                    onActorTapped(actor)
+                } label: {
+                    AvatarView(url: actor.avatarURL, size: 44)
+                }
+                .buttonStyle(.plain)
             } else {
                 Circle()
                     .fill(Color.gray.opacity(0.3))
                     .frame(width: 44, height: 44)
             }
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(notificationText)
-                    .font(.subheadline)
-                
-                Text(notification.createdAt.timeAgoDisplay())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // Content - tappable to go to post or profile depending on type
+            Button {
+                onNotificationTapped()
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(notificationText)
+                        .font(.subheadline)
+                    
+                    Text(notification.createdAt.timeAgoDisplay())
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .buttonStyle(.plain)
             
             Spacer()
             
             notificationIcon
         }
         .padding(.vertical, 4)
-        .contentShape(Rectangle())
     }
     
     private var notificationText: AttributedString {
