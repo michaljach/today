@@ -9,6 +9,7 @@ struct ProfileFeature {
         var posts: IdentifiedArrayOf<Post> = []
         var stats: ProfileStats = ProfileStats()
         var isLoading: Bool = false
+        var isLoadingPosts: Bool = false
         var isUploadingAvatar: Bool = false
         var isTogglingFollow: Bool = false
         var isFollowing: Bool = false
@@ -22,6 +23,11 @@ struct ProfileFeature {
         }
         
         @Presents var destination: Destination.State?
+        
+        init(user: User? = nil, viewingUserId: UUID? = nil) {
+            self.user = user
+            self.viewingUserId = viewingUserId
+        }
     }
     
     struct ProfileStats: Equatable {
@@ -72,13 +78,14 @@ struct ProfileFeature {
             switch action {
             case .onAppear:
                 // For current user: user might be pre-loaded from AppFeature, but we still need posts
-                // For other users: load both user and posts
+                // For other users: user might be passed in, but we still need posts and stats
                 let needsUserLoad = state.user == nil
                 let needsPostsLoad = state.posts.isEmpty
                 
                 guard needsUserLoad || needsPostsLoad else { return .none }
                 
-                state.isLoading = needsUserLoad // Only show loading if we need to fetch user
+                state.isLoading = needsUserLoad // Only show full loading if we need to fetch user
+                state.isLoadingPosts = needsPostsLoad && !needsUserLoad // Show posts loading if user is already available
                 state.errorMessage = nil
                 let viewingUserId = state.viewingUserId
                 let existingUser = state.user
@@ -93,7 +100,11 @@ struct ProfileFeature {
                         
                         if let userId = viewingUserId {
                             // Viewing another user's profile
-                            user = try await profileClient.getProfile(userId)
+                            if let existingUser {
+                                user = existingUser
+                            } else {
+                                user = try await profileClient.getProfile(userId)
+                            }
                             posts = try await postClient.getUserPosts(userId, 20, 0)
                             followersCount = try await followClient.getFollowerCount(userId)
                             followingCount = try await followClient.getFollowingCount(userId)
@@ -150,6 +161,7 @@ struct ProfileFeature {
                 
             case .dataLoaded(.success(let (user, posts, followersCount, followingCount, isFollowing))):
                 state.isLoading = false
+                state.isLoadingPosts = false
                 state.user = user
                 state.posts = IdentifiedArrayOf(uniqueElements: posts)
                 state.stats = ProfileStats(
@@ -162,6 +174,7 @@ struct ProfileFeature {
                 
             case .dataLoaded(.failure(let error)):
                 state.isLoading = false
+                state.isLoadingPosts = false
                 state.errorMessage = error.localizedDescription
                 return .none
                 

@@ -143,7 +143,7 @@ struct NotificationsFeature {
                 switch notification.notificationType {
                 case .follow:
                     // Navigate to the actor's profile
-                    state.destination = .profile(ProfileFeature.State(viewingUserId: notification.actorId))
+                    state.destination = .profile(ProfileFeature.State(user: notification.actor, viewingUserId: notification.actorId))
                     return .none
                     
                 case .like, .comment:

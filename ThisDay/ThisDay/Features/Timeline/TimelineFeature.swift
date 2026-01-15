@@ -121,7 +121,7 @@ struct TimelineFeature {
                 return .none
                 
             case .profileTapped(let user):
-                state.destination = .profile(ProfileFeature.State(viewingUserId: user.id))
+                state.destination = .profile(ProfileFeature.State(user: user, viewingUserId: user.id))
                 return .none
                 
             case .deletePostTapped(let post):

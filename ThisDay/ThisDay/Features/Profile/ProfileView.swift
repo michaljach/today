@@ -175,7 +175,13 @@ struct ProfileView: View {
     
     private var postsList: some View {
         Group {
-            if store.posts.isEmpty && !store.isLoading {
+            if store.isLoadingPosts {
+                VStack {
+                    ProgressView()
+                        .padding(.top, 40)
+                    Spacer()
+                }
+            } else if store.posts.isEmpty && !store.isLoading {
                 ContentUnavailableView {
                     Label("No Posts Yet", systemImage: "photo.on.rectangle.angled")
                 } description: {

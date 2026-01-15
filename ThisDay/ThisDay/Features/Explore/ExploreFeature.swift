@@ -160,7 +160,7 @@ struct ExploreFeature {
                 return .none
                 
             case .userTapped(let user):
-                state.destination = .profile(ProfileFeature.State(viewingUserId: user.id))
+                state.destination = .profile(ProfileFeature.State(user: user, viewingUserId: user.id))
                 return .none
                 
             case .destination:
