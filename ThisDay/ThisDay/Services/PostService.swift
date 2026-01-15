@@ -139,8 +139,8 @@ actor PostService {
             .execute()
             .value
         
-        // Fetch all users for these posts in one query
-        let users = try await ProfileService.shared.getProfiles(userIds: postUserIds)
+        // Fetch all users for these posts in one query (with stats for instant profile display)
+        let users = try await ProfileService.shared.getProfilesWithStats(userIds: postUserIds)
         let userDict = Dictionary(uniqueKeysWithValues: users.map { ($0.id, $0) })
         
         // Group photos by post ID
@@ -188,8 +188,8 @@ actor PostService {
             .execute()
             .value
         
-        // Fetch all users for these posts in one query
-        let users = try await ProfileService.shared.getProfiles(userIds: userIds)
+        // Fetch all users for these posts in one query (with stats for instant profile display)
+        let users = try await ProfileService.shared.getProfilesWithStats(userIds: userIds)
         let userDict = Dictionary(uniqueKeysWithValues: users.map { ($0.id, $0) })
         
         // Group photos by post ID

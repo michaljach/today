@@ -82,6 +82,24 @@ struct ProfileFeature {
                 let needsUserLoad = state.user == nil
                 let needsPostsLoad = state.posts.isEmpty
                 
+                // If we already have user with stats, use them immediately
+                if let user = state.user {
+                    if let postsCount = user.postsCount {
+                        state.stats.postsCount = postsCount
+                    }
+                    if let followersCount = user.followersCount {
+                        state.stats.followersCount = followersCount
+                    }
+                    if let followingCount = user.followingCount {
+                        state.stats.followingCount = followingCount
+                    }
+                }
+                
+                // Check if we have all stats from user object
+                let hasAllStats = state.user?.postsCount != nil && 
+                                  state.user?.followersCount != nil && 
+                                  state.user?.followingCount != nil
+                
                 guard needsUserLoad || needsPostsLoad else { return .none }
                 
                 state.isLoading = needsUserLoad // Only show full loading if we need to fetch user
@@ -89,36 +107,51 @@ struct ProfileFeature {
                 state.errorMessage = nil
                 let viewingUserId = state.viewingUserId
                 let existingUser = state.user
+                let needsStatsFetch = !hasAllStats
                 
-                return .run { [followClient] send in
+                return .run { [followClient, profileClient, postClient] send in
                     do {
                         let user: User
                         let posts: [Post]
-                        let followersCount: Int
-                        let followingCount: Int
+                        var followersCount: Int = 0
+                        var followingCount: Int = 0
                         var isFollowing = false
                         
                         if let userId = viewingUserId {
                             // Viewing another user's profile
                             if let existingUser {
                                 user = existingUser
+                                // Use pre-fetched stats if available
+                                followersCount = existingUser.followersCount ?? 0
+                                followingCount = existingUser.followingCount ?? 0
                             } else {
                                 user = try await profileClient.getProfile(userId)
                             }
                             posts = try await postClient.getUserPosts(userId, 20, 0)
-                            followersCount = try await followClient.getFollowerCount(userId)
-                            followingCount = try await followClient.getFollowingCount(userId)
+                            
+                            // Only fetch stats if not already available
+                            if needsStatsFetch {
+                                followersCount = try await followClient.getFollowerCount(userId)
+                                followingCount = try await followClient.getFollowingCount(userId)
+                            }
                             isFollowing = try await followClient.isFollowing(userId)
                         } else {
                             // Current user's profile - use existing user if available
                             if let existingUser {
                                 user = existingUser
+                                // Use pre-fetched stats if available
+                                followersCount = existingUser.followersCount ?? 0
+                                followingCount = existingUser.followingCount ?? 0
                             } else {
                                 user = try await profileClient.getCurrentUserProfile()
                             }
                             posts = try await postClient.getCurrentUserPosts(20, 0)
-                            followersCount = try await followClient.getFollowerCount(user.id)
-                            followingCount = try await followClient.getFollowingCount(user.id)
+                            
+                            // Only fetch stats if not already available
+                            if needsStatsFetch {
+                                followersCount = try await followClient.getFollowerCount(user.id)
+                                followingCount = try await followClient.getFollowingCount(user.id)
+                            }
                         }
                         
                         await send(.dataLoaded(.success((user, posts, followersCount, followingCount, isFollowing))))

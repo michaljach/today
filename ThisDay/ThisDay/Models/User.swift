@@ -10,13 +10,21 @@ struct User: Equatable, Identifiable, Codable {
     let createdAt: Date?
     let updatedAt: Date?
     
+    // Stats - populated separately, not from profiles table
+    var postsCount: Int?
+    var followersCount: Int?
+    var followingCount: Int?
+    
     init(
         id: UUID = UUID(),
         username: String,
         displayName: String,
         avatarURL: URL? = nil,
         createdAt: Date? = nil,
-        updatedAt: Date? = nil
+        updatedAt: Date? = nil,
+        postsCount: Int? = nil,
+        followersCount: Int? = nil,
+        followingCount: Int? = nil
     ) {
         self.id = id
         self.username = username
@@ -24,6 +32,9 @@ struct User: Equatable, Identifiable, Codable {
         self.avatarURL = avatarURL
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.postsCount = postsCount
+        self.followersCount = followersCount
+        self.followingCount = followingCount
     }
     
     enum CodingKeys: String, CodingKey {
@@ -33,6 +44,9 @@ struct User: Equatable, Identifiable, Codable {
         case avatarURL = "avatar_url"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        case postsCount = "posts_count"
+        case followersCount = "followers_count"
+        case followingCount = "following_count"
     }
 }
 

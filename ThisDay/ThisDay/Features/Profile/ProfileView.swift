@@ -103,9 +103,11 @@ struct ProfileView: View {
             }
             
             HStack(spacing: 32) {
-                statItem(value: store.stats.postsCount, label: "Posts", isLoading: store.isLoadingPosts)
-                statItem(value: store.stats.followersCount, label: "Followers", isLoading: store.isLoadingPosts)
-                statItem(value: store.stats.followingCount, label: "Following", isLoading: store.isLoadingPosts)
+                // Show stats immediately if available from User object, otherwise show loading
+                let hasPreloadedStats = store.user?.followersCount != nil
+                statItem(value: store.stats.postsCount, label: "Posts", isLoading: store.isLoadingPosts && !hasPreloadedStats)
+                statItem(value: store.stats.followersCount, label: "Followers", isLoading: store.isLoadingPosts && !hasPreloadedStats)
+                statItem(value: store.stats.followingCount, label: "Following", isLoading: store.isLoadingPosts && !hasPreloadedStats)
             }
             .padding(.top, 8)
             

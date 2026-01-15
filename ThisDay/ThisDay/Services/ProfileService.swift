@@ -52,6 +52,123 @@ actor ProfileService {
             .value
     }
     
+    /// Fetches multiple profiles with their stats (posts, followers, following counts)
+    /// - Parameter userIds: Array of user UUIDs
+    /// - Returns: Array of User profiles with stats populated
+    func getProfilesWithStats(userIds: [UUID]) async throws -> [User] {
+        guard !userIds.isEmpty else { return [] }
+        
+        // First get the basic profiles
+        var users = try await getProfiles(userIds: userIds)
+        
+        // Batch fetch stats for all users
+        let stats = try await getStatsForUsers(userIds: userIds)
+        
+        // Populate stats on users
+        for i in users.indices {
+            if let userStats = stats[users[i].id] {
+                users[i].postsCount = userStats.postsCount
+                users[i].followersCount = userStats.followersCount
+                users[i].followingCount = userStats.followingCount
+            }
+        }
+        
+        return users
+    }
+    
+    /// Batch fetches stats for multiple users
+    /// - Parameter userIds: Array of user UUIDs
+    /// - Returns: Dictionary mapping user ID to their stats
+    private func getStatsForUsers(userIds: [UUID]) async throws -> [UUID: UserStats] {
+        guard !userIds.isEmpty else { return [:] }
+        
+        let ids = userIds.map { $0.uuidString }
+        
+        // Fetch posts counts
+        struct PostCount: Decodable {
+            let userId: UUID
+            
+            enum CodingKeys: String, CodingKey {
+                case userId = "user_id"
+            }
+        }
+        
+        let posts: [PostCount] = try await supabase
+            .from("posts")
+            .select("user_id")
+            .in("user_id", values: ids)
+            .execute()
+            .value
+        
+        // Count posts per user
+        var postsCounts: [UUID: Int] = [:]
+        for post in posts {
+            postsCounts[post.userId, default: 0] += 1
+        }
+        
+        // Fetch followers counts (where user is being followed)
+        struct FollowerCount: Decodable {
+            let followingId: UUID
+            
+            enum CodingKeys: String, CodingKey {
+                case followingId = "following_id"
+            }
+        }
+        
+        let followers: [FollowerCount] = try await supabase
+            .from("follows")
+            .select("following_id")
+            .in("following_id", values: ids)
+            .execute()
+            .value
+        
+        // Count followers per user
+        var followersCounts: [UUID: Int] = [:]
+        for follow in followers {
+            followersCounts[follow.followingId, default: 0] += 1
+        }
+        
+        // Fetch following counts (where user is following others)
+        struct FollowingCount: Decodable {
+            let followerId: UUID
+            
+            enum CodingKeys: String, CodingKey {
+                case followerId = "follower_id"
+            }
+        }
+        
+        let following: [FollowingCount] = try await supabase
+            .from("follows")
+            .select("follower_id")
+            .in("follower_id", values: ids)
+            .execute()
+            .value
+        
+        // Count following per user
+        var followingCounts: [UUID: Int] = [:]
+        for follow in following {
+            followingCounts[follow.followerId, default: 0] += 1
+        }
+        
+        // Build stats dictionary
+        var stats: [UUID: UserStats] = [:]
+        for userId in userIds {
+            stats[userId] = UserStats(
+                postsCount: postsCounts[userId] ?? 0,
+                followersCount: followersCounts[userId] ?? 0,
+                followingCount: followingCounts[userId] ?? 0
+            )
+        }
+        
+        return stats
+    }
+    
+    struct UserStats {
+        let postsCount: Int
+        let followersCount: Int
+        let followingCount: Int
+    }
+    
     /// Fetches the current authenticated user's profile
     /// - Returns: The current user's profile
     func getCurrentUserProfile() async throws -> User {
