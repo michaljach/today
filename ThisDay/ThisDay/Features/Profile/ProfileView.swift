@@ -76,6 +76,9 @@ struct ProfileView: View {
         .sheet(item: $store.scope(state: \.destination?.editProfile, action: \.destination.editProfile)) { editProfileStore in
             EditProfileView(store: editProfileStore)
         }
+        .navigationDestination(item: $store.scope(state: \.destination?.profile, action: \.destination.profile)) { profileStore in
+            ProfileView(store: profileStore)
+        }
     }
     
     private func profileHeader(user: User) -> some View {

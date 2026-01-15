@@ -32,8 +32,8 @@ struct PhotoViewerView: View {
                             .tag(index)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: store.post.photos.count > 1 ? .automatic : .never))
-                .ignoresSafeArea(edges: .top)
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .ignoresSafeArea()
                 
                 // Comments overlay at bottom
                 if let commentsStore = store.scope(state: \.comments, action: \.comments) {
@@ -56,6 +56,19 @@ struct PhotoViewerView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    // Page indicator in center of toolbar
+                    if store.post.photos.count > 1 {
+                        HStack(spacing: 6) {
+                            ForEach(0..<store.post.photos.count, id: \.self) { index in
+                                Circle()
+                                    .fill(index == store.selectedIndex ? Color.white : Color.white.opacity(0.4))
+                                    .frame(width: 6, height: 6)
+                            }
+                        }
+                    }
+                }
+                
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         if let user = store.post.user {

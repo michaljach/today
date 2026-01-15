@@ -68,6 +68,7 @@ struct ProfileFeature {
     enum Destination {
         case comments(CommentsFeature)
         case editProfile(EditProfileFeature)
+        case profile(ProfileFeature)
     }
     
     @Dependency(\.authClient) var authClient
@@ -362,6 +363,11 @@ struct ProfileFeature {
                 
             case .commentsTapped(let post):
                 state.destination = .comments(CommentsFeature.State(post: post))
+                return .none
+                
+            case .destination(.presented(.comments(.userTapped(let user)))):
+                // Dismiss comments sheet and navigate to user's profile
+                state.destination = .profile(ProfileFeature.State(user: user, viewingUserId: user.id))
                 return .none
                 
             case .destination(.presented(.editProfile(.delegate(.profileUpdated(let user))))):

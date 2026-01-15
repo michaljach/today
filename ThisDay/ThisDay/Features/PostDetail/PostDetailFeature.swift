@@ -80,6 +80,11 @@ struct PostDetailFeature {
                 state.destination = .profile(ProfileFeature.State(user: user, viewingUserId: user.id))
                 return .none
                 
+            case .destination(.presented(.comments(.userTapped(let user)))):
+                // Dismiss comments sheet and navigate to user's profile
+                state.destination = .profile(ProfileFeature.State(user: user, viewingUserId: user.id))
+                return .none
+                
             case .destination:
                 return .none
             }
