@@ -145,7 +145,7 @@ struct NotificationRow: View {
                     .foregroundStyle(.red)
             case .comment:
                 Image(systemName: "bubble.right.fill")
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             case .follow:
                 Image(systemName: "person.badge.plus")
                     .foregroundStyle(.green)
