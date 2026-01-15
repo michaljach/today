@@ -33,6 +33,12 @@ struct AuthView: View {
                                     .textContentType(.username)
                                     .autocapitalization(.none)
                                     .autocorrectionDisabled()
+                                    .onChange(of: store.username) { _, newValue in
+                                        let sanitized = newValue.lowercased().filter { $0.isLetter || $0.isNumber || $0 == "_" }
+                                        if sanitized != newValue {
+                                            store.username = sanitized
+                                        }
+                                    }
                                 
                                 if store.isCheckingUsername {
                                     ProgressView()

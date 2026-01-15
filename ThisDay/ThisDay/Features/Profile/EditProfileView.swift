@@ -29,6 +29,12 @@ struct EditProfileView: View {
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .focused($focusedField, equals: .username)
+                            .onChange(of: store.username) { _, newValue in
+                                let sanitized = newValue.lowercased().filter { $0.isLetter || $0.isNumber || $0 == "_" }
+                                if sanitized != newValue {
+                                    store.username = sanitized
+                                }
+                            }
                         
                         if store.isCheckingUsername {
                             ProgressView()
