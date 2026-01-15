@@ -1,6 +1,10 @@
 import ComposableArchitecture
 import SwiftUI
 
+extension Int: @retroactive Identifiable {
+  public var id: Int { self }
+}
+
 struct AvatarView: View {
   let url: URL?
   var size: CGFloat = 44
@@ -58,8 +62,7 @@ struct PostView: View {
   var onLikeTapped: ((Post) -> Void)?
   var onCommentsTapped: ((Post) -> Void)?
   
-  @State private var showPhotoViewer = false
-  @State private var selectedPhotoIndex: Int = 0
+  @State private var selectedPhotoIndex: Int?
   
   private var isOwnPost: Bool {
     guard let currentUserId else { return false }
@@ -88,7 +91,6 @@ struct PostView: View {
       // Photo grid
       PhotoGridView(photos: post.photos) { index in
         selectedPhotoIndex = index
-        showPhotoViewer = true
       }
       
       // Engagement stats
@@ -116,12 +118,12 @@ struct PostView: View {
       }
       .font(.subheadline)
     }
-    .sheet(isPresented: $showPhotoViewer) {
+    .sheet(item: $selectedPhotoIndex) { index in
       PhotoViewerView(
         store: Store(
           initialState: PhotoViewerFeature.State(
             post: post,
-            selectedIndex: selectedPhotoIndex,
+            selectedIndex: index,
             showInlineComments: true
           )
         ) {

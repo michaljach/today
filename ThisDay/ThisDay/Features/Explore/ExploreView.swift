@@ -171,6 +171,7 @@ struct ExploreView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 

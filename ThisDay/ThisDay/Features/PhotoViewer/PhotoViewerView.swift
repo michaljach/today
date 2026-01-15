@@ -39,6 +39,10 @@ struct PhotoViewerView: View {
             
             Spacer(minLength: 0)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
         .safeAreaInset(edge: .bottom) {
             if let commentsStore = store.scope(state: \.comments, action: \.comments) {
                 CommentsBottomBar(
@@ -243,8 +247,9 @@ private struct CommentsBottomBar: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: store.isLikedByCurrentUser ? "heart.fill" : "heart")
-                                .foregroundStyle(store.isLikedByCurrentUser ? .red : .primary)
+                                .foregroundStyle(store.isLikedByCurrentUser ? .red : .white)
                             Text("\(store.likesCount)")
+                                .foregroundStyle(.white)
                         }
                         .font(.subheadline)
                     }
@@ -256,7 +261,7 @@ private struct CommentsBottomBar: View {
                         Text("\(store.comments.count)")
                     }
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.7))
                     
                     Spacer()
                     
@@ -264,7 +269,7 @@ private struct CommentsBottomBar: View {
                     Image(systemName: "chevron.up")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.white.opacity(0.5))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -284,11 +289,11 @@ private struct CommentsBottomBar: View {
                         } else if store.comments.isEmpty {
                             Text("No comments yet")
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.white.opacity(0.7))
                                 .padding(12)
                         } else {
                             ForEach(previewComments) { comment in
-                                CommentRow(comment: comment, onUserTapped: nil)
+                                CommentRow(comment: comment, onUserTapped: nil, isDarkBackground: true)
                             }
                             .padding(.top, 8)
                             
@@ -312,7 +317,7 @@ private struct CommentsBottomBar: View {
         }
         .padding(.horizontal, 8)
         .padding(.bottom, 8)
-        .background(Color(.systemBackground))
+        .background(Color.clear)
         .animation(.easeInOut(duration: 0.2), value: isInputFocused)
     }
     
@@ -323,6 +328,7 @@ private struct CommentsBottomBar: View {
                     TextField("Add a comment...", text: $store.newCommentText)
                         .textFieldStyle(.plain)
                         .font(.subheadline)
+                        .foregroundStyle(.white)
                         .focused($isInputFocused)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
@@ -331,26 +337,17 @@ private struct CommentsBottomBar: View {
                     TextField("Add a comment...", text: $store.newCommentText)
                         .textFieldStyle(.plain)
                         .font(.subheadline)
+                        .foregroundStyle(.white)
                         .focused($isInputFocused)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
-                        .background(Color(.systemGray6))
+                        .background(Color.white.opacity(0.15))
                         .clipShape(RoundedRectangle(cornerRadius: 20))
                 }
             }
             .onSubmit {
                 if canSubmit {
                     store.send(.submitComment)
-                }
-            }
-            
-            if isInputFocused {
-                Button {
-                    isInputFocused = false
-                } label: {
-                    Text("Cancel")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
                 }
             }
             
@@ -362,6 +359,7 @@ private struct CommentsBottomBar: View {
                     if store.isSubmitting {
                         ProgressView()
                             .scaleEffect(0.8)
+                            .tint(.white)
                     } else {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
@@ -520,6 +518,7 @@ private struct CommentsSheetView: View {
 private struct CommentRow: View {
     let comment: Comment
     var onUserTapped: ((User) -> Void)?
+    var isDarkBackground: Bool = false
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -537,14 +536,16 @@ private struct CommentRow: View {
                     Text(comment.user?.displayName ?? "Unknown")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .foregroundStyle(isDarkBackground ? .white : .primary)
                     
                     Text(comment.createdAt?.timeAgoDisplay() ?? "")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isDarkBackground ? .white.opacity(0.6) : .secondary)
                 }
                 
                 Text(comment.content)
                     .font(.subheadline)
+                    .foregroundStyle(isDarkBackground ? .white : .primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             
