@@ -66,6 +66,7 @@ struct PhotoViewerView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
+                        .contentShape(.capsule)
                     }
                     .buttonStyle(.plain)
                 }
@@ -80,9 +81,7 @@ struct PhotoViewerView: View {
                     }
                 }
             }
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $store.showCommentsSheet) {
             if let commentsStore = store.scope(state: \.comments, action: \.comments) {
