@@ -33,7 +33,7 @@ struct NotificationsView: View {
                                 store.send(.notificationTapped(notification))
                             }
                         )
-                        .listRowBackground(notification.isRead ? Color.clear : Color.blue.opacity(0.05))
+                        .listRowBackground(notification.isRead ? Color.clear : Color.accentColor.opacity(0.05))
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -145,7 +145,7 @@ struct NotificationRow: View {
                     .foregroundStyle(.red)
             case .comment:
                 Image(systemName: "bubble.right.fill")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.accentColor)
             case .follow:
                 Image(systemName: "person.badge.plus")
                     .foregroundStyle(.green)

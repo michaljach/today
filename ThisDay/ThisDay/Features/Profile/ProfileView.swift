@@ -86,7 +86,7 @@ struct ProfileView: View {
                         .overlay(alignment: .bottomTrailing) {
                             Image(systemName: "camera.circle.fill")
                                 .font(.title2)
-                                .foregroundStyle(.white, .blue)
+                                .foregroundStyle(.white, .accentColor)
                                 .offset(x: 4, y: 4)
                         }
                 }
@@ -137,7 +137,7 @@ struct ProfileView: View {
                         .padding(.vertical, 8)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(store.isFollowing ? .gray : .blue)
+                .tint(store.isFollowing ? .gray : .accentColor)
                 .disabled(store.isTogglingFollow)
                 .padding(.horizontal, 32)
             }

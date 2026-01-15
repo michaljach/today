@@ -35,7 +35,7 @@ struct PostLimitExplanationView: View {
                         
                         ExplanationRow(
                             icon: "person.2.fill",
-                            color: .blue,
+                            color: .accentColor,
                             title: "Mindful Sharing",
                             description: "This creates a more intentional feed where every post matters, both for you and your followers."
                         )
