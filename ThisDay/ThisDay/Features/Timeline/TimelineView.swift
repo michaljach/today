@@ -6,6 +6,7 @@ struct TimelineView: View {
     var canPostToday: Bool = true
     var lastPostDate: Date?
     var onComposeTapped: (() -> Void)?
+    var onExploreTapped: (() -> Void)?
     
     @State private var showPostLimitExplanation = false
     
@@ -32,7 +33,12 @@ struct TimelineView: View {
                         } description: {
                             Text("Follow some profiles to see their moments here!")
                         } actions: {
-                            EmptyView()
+                            if let onExploreTapped {
+                                Button("Find People") {
+                                    onExploreTapped()
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
                         }
                     } else {
                         ScrollView {

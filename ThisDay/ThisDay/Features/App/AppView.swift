@@ -32,7 +32,8 @@ struct AppView: View {
         store: store.scope(state: \.timeline, action: \.timeline),
         canPostToday: store.canPostToday,
         lastPostDate: store.lastPostDate,
-        onComposeTapped: { store.send(.composeTapped) }
+        onComposeTapped: { store.send(.composeTapped) },
+        onExploreTapped: { store.send(.tabSelected(.explore)) }
       )
       .tabItem {
         Image("icon-home")
