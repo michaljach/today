@@ -19,33 +19,39 @@ struct EditProfileView: View {
             Form {
                 // Profile Section
                 Section {
-                    TextField("Display Name", text: $store.displayName)
-                        .textContentType(.name)
-                        .focused($focusedField, equals: .displayName)
+                    LabeledContent("Display Name") {
+                        TextField("Display Name", text: $store.displayName)
+                            .textContentType(.name)
+                            .focused($focusedField, equals: .displayName)
+                            .multilineTextAlignment(.trailing)
+                    }
                     
-                    HStack {
-                        TextField("Username", text: $store.username)
-                            .textContentType(.username)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .focused($focusedField, equals: .username)
-                            .onChange(of: store.username) { _, newValue in
-                                let sanitized = newValue.lowercased().filter { $0.isLetter || $0.isNumber || $0 == "_" }
-                                if sanitized != newValue {
-                                    store.username = sanitized
+                    LabeledContent("Username") {
+                        HStack {
+                            TextField("Username", text: $store.username)
+                                .textContentType(.username)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .focused($focusedField, equals: .username)
+                                .multilineTextAlignment(.trailing)
+                                .onChange(of: store.username) { _, newValue in
+                                    let sanitized = newValue.lowercased().filter { $0.isLetter || $0.isNumber || $0 == "_" }
+                                    if sanitized != newValue {
+                                        store.username = sanitized
+                                    }
                                 }
-                            }
-                        
-                        if store.isCheckingUsername {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else if store.username != store.user.username {
-                            if store.usernameAvailable == true {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.green)
-                            } else if store.usernameAvailable == false {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.red)
+                            
+                            if store.isCheckingUsername {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else if store.username != store.user.username {
+                                if store.usernameAvailable == true {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                } else if store.usernameAvailable == false {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.red)
+                                }
                             }
                         }
                     }
