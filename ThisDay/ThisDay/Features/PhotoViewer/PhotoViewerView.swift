@@ -289,7 +289,7 @@ private struct CommentsBottomBar: View {
                             Text(store.comments.count > 2 ? "Show all \(store.comments.count) comments" : "Show comments")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
                         }
@@ -353,7 +353,7 @@ private struct CommentsBottomBar: View {
                             .font(.title2)
                     }
                 }
-                .foregroundStyle(canSubmit ? .accentColor : .gray)
+                .foregroundStyle(canSubmit ? Color.accentColor : Color.gray)
             }
             .disabled(!canSubmit || store.isSubmitting)
         }
@@ -484,7 +484,7 @@ private struct CommentsSheetView: View {
                             .font(.title2)
                     }
                 }
-                .foregroundStyle(canSubmit ? .accentColor : .gray)
+                .foregroundStyle(canSubmit ? Color.accentColor : Color.gray)
             }
             .disabled(!canSubmit || store.isSubmitting)
         }
