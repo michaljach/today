@@ -592,7 +592,7 @@ struct PhotoPageView: View {
                 EmptyView()
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 
