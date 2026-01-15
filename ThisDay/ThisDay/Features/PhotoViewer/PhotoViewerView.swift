@@ -22,34 +22,68 @@ struct PhotoViewerView: View {
     // MARK: - Inline Comments Layout
     
     private var inlineCommentsLayout: some View {
-        VStack(spacing: 0) {
-            // User header at top
-            userHeaderOverlay
-                .padding(.top, 16)
-                .padding(.bottom, 12)
-            
-            // Photo carousel - below header
-            TabView(selection: $store.selectedIndex) {
-                ForEach(store.post.photos.indices, id: \.self) { index in
-                    PhotoPageView(photo: store.post.photos[index])
-                        .tag(index)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Photo carousel
+                TabView(selection: $store.selectedIndex) {
+                    ForEach(store.post.photos.indices, id: \.self) { index in
+                        PhotoPageView(photo: store.post.photos[index])
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: store.post.photos.count > 1 ? .automatic : .never))
+                
+                Spacer(minLength: 0)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
+            .safeAreaInset(edge: .bottom) {
+                if let commentsStore = store.scope(state: \.comments, action: \.comments) {
+                    CommentsBottomBar(
+                        store: commentsStore,
+                        onTap: { store.send(.showCommentsSheet) }
+                    )
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: store.post.photos.count > 1 ? .automatic : .never))
-            
-            Spacer(minLength: 0)
-        }
-        .scrollDismissesKeyboard(.interactively)
-        .onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        }
-        .safeAreaInset(edge: .bottom) {
-            if let commentsStore = store.scope(state: \.comments, action: \.comments) {
-                CommentsBottomBar(
-                    store: commentsStore,
-                    onTap: { store.send(.showCommentsSheet) }
-                )
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Button {
+                        if let user = store.post.user {
+                            store.send(.userTapped(user))
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            AvatarView(url: store.post.user?.avatarURL, size: 28)
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(store.post.user?.displayName ?? "Unknown")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                Text("@\(store.post.user?.username ?? "unknown")")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(.secondary)
+                            .font(.title2)
+                    }
+                }
             }
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .sheet(isPresented: $store.showCommentsSheet) {
             if let commentsStore = store.scope(state: \.comments, action: \.comments) {
@@ -63,50 +97,6 @@ struct PhotoViewerView: View {
                 .presentationDragIndicator(.visible)
             }
         }
-    }
-    
-    private var userHeaderOverlay: some View {
-        HStack(spacing: 12) {
-            Button {
-                if let user = store.post.user {
-                    store.send(.userTapped(user))
-                }
-            } label: {
-                AvatarView(url: store.post.user?.avatarURL, size: 36)
-            }
-            .buttonStyle(.plain)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(store.post.user?.displayName ?? "Unknown")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                Text("@\(store.post.user?.username ?? "unknown")")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.7))
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                if let user = store.post.user {
-                    store.send(.userTapped(user))
-                }
-            }
-            
-            Spacer()
-            
-            // Close button
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 30, height: 30)
-                    .background(.white.opacity(0.2))
-                    .clipShape(Circle())
-            }
-        }
-        .padding(.horizontal, 16)
     }
     
     // MARK: - Original Fullscreen Layout
