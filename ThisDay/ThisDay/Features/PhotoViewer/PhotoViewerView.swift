@@ -49,7 +49,7 @@ struct PhotoViewerView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
                         if let user = store.post.user {
                             store.send(.userTapped(user))
@@ -70,13 +70,12 @@ struct PhotoViewerView: View {
                     .buttonStyle(.plain)
                 }
                 
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(.secondary)
                             .font(.title2)
                     }
                 }
