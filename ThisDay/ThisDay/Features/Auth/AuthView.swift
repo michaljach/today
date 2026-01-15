@@ -27,11 +27,26 @@ struct AuthView: View {
                     // Form
                     VStack(spacing: 16) {
                         if store.mode == .signUp {
-                            TextField("Username", text: $store.username)
-                                .textFieldStyle(.roundedBorder)
-                                .textContentType(.username)
-                                .autocapitalization(.none)
-                                .autocorrectionDisabled()
+                            HStack {
+                                TextField("Username", text: $store.username)
+                                    .textFieldStyle(.roundedBorder)
+                                    .textContentType(.username)
+                                    .autocapitalization(.none)
+                                    .autocorrectionDisabled()
+                                
+                                if store.isCheckingUsername {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                } else if !store.username.isEmpty {
+                                    if store.usernameAvailable == true {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.green)
+                                    } else if store.usernameAvailable == false {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.red)
+                                    }
+                                }
+                            }
                             
                             TextField("Display Name", text: $store.displayName)
                                 .textFieldStyle(.roundedBorder)

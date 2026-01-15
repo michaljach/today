@@ -12,6 +12,8 @@ struct AuthFeature {
         var displayName: String = ""
         var isLoading: Bool = false
         var errorMessage: String?
+        var isCheckingUsername: Bool = false
+        var usernameAvailable: Bool? = nil
         
         enum Mode: Equatable {
             case signIn
@@ -23,7 +25,9 @@ struct AuthFeature {
             case .signIn:
                 return !email.isEmpty && !password.isEmpty
             case .signUp:
-                return !email.isEmpty && !password.isEmpty && !username.isEmpty && !displayName.isEmpty
+                let basicFieldsValid = !email.isEmpty && !password.isEmpty && !username.isEmpty && !displayName.isEmpty
+                let usernameValid = usernameAvailable == true
+                return basicFieldsValid && usernameValid
             }
         }
     }
@@ -33,6 +37,8 @@ struct AuthFeature {
         case toggleMode
         case submitTapped
         case authResponse(Result<Void, Error>)
+        case checkUsernameAvailability
+        case usernameAvailabilityResult(Bool)
         case delegate(Delegate)
         
         @CasePathable
@@ -42,12 +48,34 @@ struct AuthFeature {
     }
     
     @Dependency(\.authClient) var authClient
+    @Dependency(\.profileClient) var profileClient
+    
+    private enum CancelID {
+        case usernameCheck
+    }
     
     var body: some ReducerOf<Self> {
         BindingReducer()
         
         Reduce { state, action in
             switch action {
+            case .binding(\.username):
+                // Reset availability when username changes
+                state.usernameAvailable = nil
+                state.errorMessage = nil
+                
+                // Don't check if empty
+                guard !state.username.isEmpty else {
+                    return .cancel(id: CancelID.usernameCheck)
+                }
+                
+                // Debounce username availability check
+                return .run { send in
+                    try await Task.sleep(for: .milliseconds(500))
+                    await send(.checkUsernameAvailability)
+                }
+                .cancellable(id: CancelID.usernameCheck, cancelInFlight: true)
+                
             case .binding:
                 state.errorMessage = nil
                 return .none
@@ -55,6 +83,31 @@ struct AuthFeature {
             case .toggleMode:
                 state.mode = state.mode == .signIn ? .signUp : .signIn
                 state.errorMessage = nil
+                state.usernameAvailable = nil
+                state.isCheckingUsername = false
+                return .cancel(id: CancelID.usernameCheck)
+                
+            case .checkUsernameAvailability:
+                guard !state.username.isEmpty else { return .none }
+                
+                state.isCheckingUsername = true
+                let username = state.username
+                
+                return .run { send in
+                    do {
+                        let isAvailable = try await profileClient.isUsernameAvailable(username)
+                        await send(.usernameAvailabilityResult(isAvailable))
+                    } catch {
+                        await send(.usernameAvailabilityResult(false))
+                    }
+                }
+                
+            case .usernameAvailabilityResult(let isAvailable):
+                state.isCheckingUsername = false
+                state.usernameAvailable = isAvailable
+                if !isAvailable {
+                    state.errorMessage = "Username is already taken"
+                }
                 return .none
                 
             case .submitTapped:
