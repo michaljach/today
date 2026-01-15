@@ -82,7 +82,7 @@ struct ComposeView: View {
                                 Text("Add")
                                     .font(.caption)
                             }
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .frame(width: 100, height: 100)
                             .background(Color.accentColor.opacity(0.1))
                             .cornerRadius(12)
