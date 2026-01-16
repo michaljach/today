@@ -112,7 +112,8 @@ struct PhotoViewerView: View {
                 CommentsSheetView(
                     store: commentsStore,
                     onUserTapped: { user in
-                        store.send(.userTapped(user))
+                        store.showCommentsSheet = false
+                        onUserTapped?(user)
                     }
                 )
                 .presentationDetents([.large])

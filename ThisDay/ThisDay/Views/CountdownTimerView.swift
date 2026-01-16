@@ -4,8 +4,10 @@ struct CountdownTimerView: View {
     let lastPostDate: Date
     var style: Style = .banner
     var onTap: (() -> Void)?
+    var onExpired: (() -> Void)?
     @State private var timeRemaining: TimeInterval = 0
     @State private var timer: Timer?
+    @State private var hasExpired: Bool = false
     
     enum Style {
         case banner
@@ -114,6 +116,11 @@ struct CountdownTimerView: View {
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             updateTimeRemaining()
+            if timeRemaining <= 0 && !hasExpired {
+                hasExpired = true
+                stopTimer()
+                onExpired?()
+            }
         }
     }
     

@@ -76,6 +76,11 @@ struct PhotoViewerFeature {
                 state.showCommentsSheet = false
                 return .none
                 
+            case .comments(.userTapped(let user)):
+                // Forward user tap from comments to parent
+                state.showCommentsSheet = false
+                return .send(.delegate(.userTapped(user)))
+                
             case .comments:
                 return .none
                 

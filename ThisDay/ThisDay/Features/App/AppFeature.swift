@@ -64,6 +64,7 @@ struct AppFeature {
         case authStateChanged(AuthState)
         case tabSelected(State.Tab)
         case composeTapped
+        case postLimitExpired
         case compose(PresentationAction<ComposeFeature.Action>)
         case auth(AuthFeature.Action)
         case timeline(TimelineFeature.Action)
@@ -200,6 +201,10 @@ struct AppFeature {
             case .composeTapped:
                 guard state.canPostToday else { return .none }
                 state.compose = ComposeFeature.State()
+                return .none
+                
+            case .postLimitExpired:
+                state.lastPostDate = nil
                 return .none
                 
             case .compose(.presented(.delegate(.postCreated(var post)))):

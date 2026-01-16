@@ -7,6 +7,7 @@ struct TimelineView: View {
     var lastPostDate: Date?
     var onComposeTapped: (() -> Void)?
     var onExploreTapped: (() -> Void)?
+    var onPostLimitExpired: (() -> Void)?
     
     @State private var showPostLimitExplanation = false
     
@@ -91,6 +92,8 @@ struct TimelineView: View {
                 if !canPostToday, let lastPostDate {
                     CountdownTimerView(lastPostDate: lastPostDate, style: .floating) {
                         showPostLimitExplanation = true
+                    } onExpired: {
+                        onPostLimitExpired?()
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }

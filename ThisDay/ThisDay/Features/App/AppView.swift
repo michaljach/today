@@ -33,7 +33,8 @@ struct AppView: View {
         canPostToday: store.canPostToday,
         lastPostDate: store.lastPostDate,
         onComposeTapped: { store.send(.composeTapped) },
-        onExploreTapped: { store.send(.tabSelected(.explore)) }
+        onExploreTapped: { store.send(.tabSelected(.explore)) },
+        onPostLimitExpired: { store.send(.postLimitExpired) }
       )
       .tabItem {
         Image("icon-home")
