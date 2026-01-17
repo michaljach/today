@@ -77,9 +77,9 @@ struct ComposeFeature {
                             // Extract EXIF date taken
                             let takenAt = extractDateTaken(from: data)
                             
-                            // Create thumbnail
+                            // Create thumbnail and full size versions
                             let thumbnail = uiImage.resized(toMaxDimension: 300) ?? uiImage
-                            let fullSize = uiImage.resized(toMaxDimension: 1200) ?? uiImage
+                            let fullSize = uiImage.resized(toMaxDimension: 1800) ?? uiImage
                             
                             let photo = State.SelectedPhoto(
                                 id: UUID(),
@@ -123,7 +123,7 @@ struct ComposeFeature {
                         var photoURLs: [(URL, URL?, Date?)] = []
                         
                         for photo in photos {
-                            guard let imageData = photo.image.jpegData(compressionQuality: 0.8),
+                            guard let imageData = photo.image.jpegData(compressionQuality: 0.85),
                                   let thumbnailData = photo.thumbnail.jpegData(compressionQuality: 0.7) else {
                                 continue
                             }
