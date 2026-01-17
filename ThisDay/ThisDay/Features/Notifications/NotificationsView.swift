@@ -23,17 +23,17 @@ struct NotificationsView: View {
                 } else if store.notifications.isEmpty {
                     emptyState
                 } else {
-                    List(store.notifications) { notification in
-                        NotificationRow(
-                            notification: notification,
+                    List(store.groupedNotifications) { group in
+                        GroupedNotificationRow(
+                            group: group,
                             onActorTapped: { actor in
                                 store.send(.actorTapped(actor))
                             },
                             onNotificationTapped: {
-                                store.send(.notificationTapped(notification))
+                                store.send(.groupedNotificationTapped(group))
                             }
                         )
-                        .listRowBackground(notification.isRead ? Color.clear : Color.accentColor.opacity(0.05))
+                        .listRowBackground(group.isRead ? Color.clear : Color.accentColor.opacity(0.05))
                     }
                     .listStyle(.plain)
                     .refreshable {
@@ -140,6 +140,137 @@ struct NotificationRow: View {
     private var notificationIcon: some View {
         Group {
             switch notification.notificationType {
+            case .like:
+                Image(systemName: "heart.fill")
+                    .foregroundStyle(.red)
+            case .comment:
+                Image(systemName: "bubble.right.fill")
+                    .foregroundStyle(Color.accentColor)
+            case .follow:
+                Image(systemName: "person.badge.plus")
+                    .foregroundStyle(.green)
+            }
+        }
+        .font(.caption)
+    }
+}
+
+// MARK: - Grouped Notification Row
+
+struct GroupedNotificationRow: View {
+    let group: GroupedNotification
+    let onActorTapped: (User) -> Void
+    let onNotificationTapped: () -> Void
+    
+    private let avatarSize: CGFloat = 44
+    private let stackedAvatarSize: CGFloat = 32
+    private let maxVisibleAvatars = 3
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Stacked avatars
+            stackedAvatars
+            
+            // Content - tappable to go to post or profile depending on type
+            Button {
+                onNotificationTapped()
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(notificationText)
+                        .font(.subheadline)
+                        .multilineTextAlignment(.leading)
+                    
+                    Text(group.latestDate.timeAgoDisplay())
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            
+            Spacer()
+            
+            notificationIcon
+        }
+        .padding(.vertical, 4)
+    }
+    
+    @ViewBuilder
+    private var stackedAvatars: some View {
+        if group.actors.count == 1, let actor = group.primaryActor {
+            // Single actor - show regular avatar
+            Button {
+                onActorTapped(actor)
+            } label: {
+                AvatarView(url: actor.avatarURL, size: avatarSize)
+            }
+            .buttonStyle(.plain)
+        } else {
+            // Multiple actors - show stacked avatars
+            let visibleActors = Array(group.actors.prefix(maxVisibleAvatars))
+            let overlapOffset: CGFloat = 16
+            
+            ZStack(alignment: .leading) {
+                ForEach(Array(visibleActors.enumerated().reversed()), id: \.element.id) { index, actor in
+                    Button {
+                        onActorTapped(actor)
+                    } label: {
+                        AvatarView(url: actor.avatarURL, size: stackedAvatarSize)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(uiColor: .systemBackground), lineWidth: 2)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .offset(x: CGFloat(index) * overlapOffset)
+                }
+            }
+            .frame(
+                width: stackedAvatarSize + CGFloat(visibleActors.count - 1) * overlapOffset,
+                height: stackedAvatarSize
+            )
+            .frame(width: avatarSize, alignment: .leading)
+        }
+    }
+    
+    private var notificationText: AttributedString {
+        let primaryName = group.primaryActor?.displayName ?? "Someone"
+        var string = AttributedString(primaryName)
+        string.font = .subheadline.bold()
+        
+        // Add "and X others" if there are more actors
+        if group.otherActorsCount > 0 {
+            var others: AttributedString
+            if group.otherActorsCount == 1 {
+                others = AttributedString(" and 1 other")
+            } else {
+                others = AttributedString(" and \(group.otherActorsCount) others")
+            }
+            others.font = .subheadline
+            string = string + others
+        }
+        
+        // Add the action text
+        var action: AttributedString
+        switch group.type {
+        case .like:
+            action = AttributedString(" liked your photo")
+        case .comment:
+            action = AttributedString(" commented on your photo")
+        case .follow:
+            if group.actors.count > 1 {
+                action = AttributedString(" started following you")
+            } else {
+                action = AttributedString(" started following you")
+            }
+        }
+        action.font = .subheadline
+        
+        return string + action
+    }
+    
+    private var notificationIcon: some View {
+        Group {
+            switch group.type {
             case .like:
                 Image(systemName: "heart.fill")
                     .foregroundStyle(.red)

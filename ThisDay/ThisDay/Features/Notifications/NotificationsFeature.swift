@@ -11,6 +11,11 @@ struct NotificationsFeature {
         var errorMessage: String?
         
         @Presents var destination: Destination.State?
+        
+        /// Grouped notifications for display
+        var groupedNotifications: [GroupedNotification] {
+            GroupedNotification.group(Array(notifications))
+        }
     }
     
     enum Action {
@@ -23,6 +28,7 @@ struct NotificationsFeature {
         case markAllAsRead
         case markAllAsReadCompleted(Result<Void, Error>)
         case notificationTapped(AppNotification)
+        case groupedNotificationTapped(GroupedNotification)
         case actorTapped(User)
         case postLoaded(Result<Post, Error>)
         case destination(PresentationAction<Destination.Action>)
@@ -150,6 +156,27 @@ struct NotificationsFeature {
                 case .like, .comment:
                     // Navigate to the post - need to fetch it first
                     guard let postId = notification.postId else { return .none }
+                    return .run { send in
+                        do {
+                            let post = try await postClient.getPost(postId)
+                            await send(.postLoaded(.success(post)))
+                        } catch {
+                            await send(.postLoaded(.failure(error)))
+                        }
+                    }
+                }
+                
+            case .groupedNotificationTapped(let group):
+                switch group.type {
+                case .follow:
+                    // For follows, navigate to the first actor's profile
+                    guard let actor = group.primaryActor else { return .none }
+                    state.destination = .profile(ProfileFeature.State(user: actor, viewingUserId: actor.id))
+                    return .none
+                    
+                case .like, .comment:
+                    // Navigate to the post
+                    guard let postId = group.postId else { return .none }
                     return .run { send in
                         do {
                             let post = try await postClient.getPost(postId)

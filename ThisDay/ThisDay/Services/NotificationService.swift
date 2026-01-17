@@ -43,6 +43,73 @@ struct AppNotification: Codable, Identifiable, Equatable {
     }
 }
 
+/// Grouped notification that combines multiple notifications of the same type
+struct GroupedNotification: Identifiable, Equatable {
+    let id: String  // Composite key for grouping
+    let type: AppNotification.NotificationType
+    let postId: UUID?
+    let actors: [User]
+    let notifications: [AppNotification]
+    let latestDate: Date
+    
+    var isRead: Bool {
+        notifications.allSatisfy { $0.isRead }
+    }
+    
+    var primaryActor: User? {
+        actors.first
+    }
+    
+    var otherActorsCount: Int {
+        max(0, actors.count - 1)
+    }
+    
+    /// Creates grouped notifications from a list of individual notifications
+    static func group(_ notifications: [AppNotification]) -> [GroupedNotification] {
+        // Group by type and postId
+        var groups: [String: [AppNotification]] = [:]
+        
+        for notification in notifications {
+            let key: String
+            switch notification.notificationType {
+            case .like, .comment:
+                // Group by type + postId
+                key = "\(notification.type)_\(notification.postId?.uuidString ?? "nil")"
+            case .follow:
+                // All follows grouped together
+                key = "follow"
+            }
+            
+            groups[key, default: []].append(notification)
+        }
+        
+        // Convert groups to GroupedNotification
+        return groups.map { key, groupedNotifications in
+            let sortedNotifications = groupedNotifications.sorted { $0.createdAt > $1.createdAt }
+            let actors = sortedNotifications.compactMap { $0.actor }
+            // Remove duplicate actors while preserving order
+            var seenIds = Set<UUID>()
+            let uniqueActors = actors.filter { actor in
+                if seenIds.contains(actor.id) {
+                    return false
+                }
+                seenIds.insert(actor.id)
+                return true
+            }
+            
+            return GroupedNotification(
+                id: key,
+                type: sortedNotifications.first?.notificationType ?? .like,
+                postId: sortedNotifications.first?.postId,
+                actors: uniqueActors,
+                notifications: sortedNotifications,
+                latestDate: sortedNotifications.first?.createdAt ?? Date()
+            )
+        }
+        .sorted { $0.latestDate > $1.latestDate }
+    }
+}
+
 extension AppNotification {
     static let mock1 = AppNotification(
         id: UUID(),
